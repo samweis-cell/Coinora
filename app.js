@@ -50,6 +50,20 @@ async function addCountry() {
   }
 }
 
+// Land löschen
+async function deleteCountry(countryId, countryName, event) {
+  // Verhindert, dass sich beim Klicken auf Löschen das Modal öffnet
+  event.stopPropagation();
+
+  if (confirm(`Möchtest du "${countryName}" wirklich komplett löschen?`)) {
+    try {
+      await db.collection('countries').doc(countryId).delete();
+    } catch (error) {
+      alert("Fehler beim Löschen des Landes: " + error.message);
+    }
+  }
+}
+
 // Länder laden (Echtzeit & Lokal)
 function loadCountries() {
   const list = document.getElementById('country-list');
@@ -68,9 +82,15 @@ function loadCountries() {
         const card = document.createElement('div');
         card.className = "bg-white p-4 rounded-xl shadow flex justify-between items-center cursor-pointer hover:bg-slate-50 transition";
         card.onclick = () => openCountryModal(doc.id, data.name);
+        
         card.innerHTML = `
           <span class="font-medium">${data.name}</span>
-          <span class="text-xs text-indigo-600 font-bold">Öffnen →</span>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-indigo-600 font-bold">Öffnen →</span>
+            <button onclick="deleteCountry('${doc.id}', '${data.name}', event)" class="text-xs text-rose-500 hover:text-rose-700 bg-rose-50 p-2 rounded-lg font-bold">
+              🗑️
+            </button>
+          </div>
         `;
         list.appendChild(card);
       });
@@ -97,6 +117,8 @@ async function saveCoin() {
   const value = document.getElementById('coin-value').value;
   const owned = document.getElementById('coin-owned').checked;
 
+  if (!value) return;
+
   const coinRef = db.collection('countries').doc(currentCountryId).collection('coins').doc(value);
   
   await coinRef.set({
@@ -104,6 +126,15 @@ async function saveCoin() {
     owned: owned,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
+}
+
+// Einzelne Münze löschen
+async function deleteCoin(coinId) {
+  try {
+    await db.collection('countries').doc(currentCountryId).collection('coins').doc(coinId).delete();
+  } catch (error) {
+    alert("Fehler beim Löschen der Münze: " + error.message);
+  }
 }
 
 // Münzen laden
@@ -128,6 +159,9 @@ function loadCoins(countryId) {
               </div>
             </div>
           </div>
+          <button onclick="deleteCoin('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 bg-rose-100 p-2 rounded-lg font-bold">
+            🗑️
+          </button>
         `;
         coinList.appendChild(item);
       });
