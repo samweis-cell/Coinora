@@ -1,8 +1,8 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.1.1";
 
-// Standardmäßig startet die App im Bearbeitungsmodus
-let isEditMode = true;
+// Status aus localStorage abrufen (Standard ist 'true', falls noch nie gesetzt)
+let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionElem = document.getElementById("app-version");
@@ -10,9 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
   updateUiForMode();
 });
 
-// Umschalten zwischen Bearbeiten und Beobachten
+// Umschalten zwischen Bearbeiten und Beobachten & im LocalStorage speichern
 function toggleEditMode() {
   isEditMode = !isEditMode;
+  localStorage.setItem("coinora_edit_mode", isEditMode);
   updateUiForMode();
   loadCountries();
   if (currentCountryId) {
@@ -254,7 +255,6 @@ function loadCountries() {
         card.className = "relative group bg-slate-800 border border-slate-700/80 hover:border-indigo-500/50 p-4 rounded-2xl shadow-lg flex flex-col items-center justify-between text-center cursor-pointer transition transform active:scale-95 min-h-[145px]";
         card.onclick = () => openCountryModal(data.id, data.name);
         
-        // Löschen-Button wird im Beobachtungsmodus ausgeblendet
         const deleteBtnHtml = isEditMode ? `
           <button onclick="deleteCountry('${data.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100 z-10">
             🗑️
@@ -423,7 +423,6 @@ function loadCoins(countryId) {
         card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[140px]`;
         card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
 
-        // Löschen-Button nur im Bearbeitungsmodus anzeigen
         const deleteBtnHtml = isEditMode ? `
           <button onclick="deleteCoin('${coin.id}', event)" class="absolute top-2 right-2 text-xs text-rose-400 hover:text-rose-300 bg-slate-800/80 hover:bg-rose-950/60 p-1 rounded-lg transition opacity-70 group-hover:opacity-100 z-10">
             🗑️
@@ -457,3 +456,4 @@ function loadCoins(countryId) {
 }
 
 loadCountries();
+
