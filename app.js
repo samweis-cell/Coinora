@@ -1,3 +1,12 @@
+// VERSIONSNUMMER (Bei jedem Update anpassen, um den Cache auf Geräten zu überprüfen)
+const APP_VERSION = "1.0.1";
+
+// Version auf der Webseite anzeigen
+document.addEventListener("DOMContentLoaded", () => {
+  const versionElem = document.getElementById("app-version");
+  if (versionElem) versionElem.innerText = `v${APP_VERSION}`;
+});
+
 // Deine Firebase-Konfiguration
 const firebaseConfig = {
   apiKey: "AIzaSyAKbAGnQ-yyt-sCKNLy4vtlArHk91752wg",
@@ -24,7 +33,7 @@ db.enablePersistence({ synchronizeTabs: true })
 let currentCategory = 'laender';
 let currentCountryId = null;
 
-// Kategorie wechseln
+// Kategorie wechseln (Kursmünzen / Gedenkmünzen)
 function selectCategory(cat) {
   currentCategory = cat;
   document.getElementById('btn-laender').className = `p-4 bg-white rounded-xl shadow border-2 font-medium text-left transition ${cat === 'laender' ? 'border-indigo-500' : 'border-transparent'}`;
@@ -52,7 +61,7 @@ async function addCountry() {
 
 // Land löschen
 async function deleteCountry(countryId, countryName, event) {
-  // Verhindert, dass sich beim Klicken auf Löschen das Modal öffnet
+  // Verhindert, dass beim Klick auf Löschen direkt das Modal geöffnet wird
   event.stopPropagation();
 
   if (confirm(`Möchtest du "${countryName}" wirklich komplett löschen?`)) {
@@ -87,7 +96,7 @@ function loadCountries() {
           <span class="font-medium">${data.name}</span>
           <div class="flex items-center gap-3">
             <span class="text-xs text-indigo-600 font-bold">Öffnen →</span>
-            <button onclick="deleteCountry('${doc.id}', '${data.name}', event)" class="text-xs text-rose-500 hover:text-rose-700 bg-rose-50 p-2 rounded-lg font-bold">
+            <button onclick="deleteCountry('${doc.id}', '${data.name}', event)" class="text-xs text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg font-bold transition">
               🗑️
             </button>
           </div>
@@ -107,6 +116,7 @@ function openCountryModal(countryId, countryName) {
   loadCoins(countryId);
 }
 
+// Modal schließen
 function closeModal() {
   document.getElementById('coin-modal').classList.add('hidden');
   currentCountryId = null;
@@ -114,7 +124,8 @@ function closeModal() {
 
 // Münze speichern
 async function saveCoin() {
-  const value = document.getElementById('coin-value').value;
+  const valueInput = document.getElementById('coin-value');
+  const value = valueInput.value.trim();
   const owned = document.getElementById('coin-owned').checked;
 
   if (!value) return;
@@ -126,6 +137,9 @@ async function saveCoin() {
     owned: owned,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
+
+  valueInput.value = '';
+  document.getElementById('coin-owned').checked = false;
 }
 
 // Einzelne Münze löschen
@@ -145,6 +159,11 @@ function loadCoins(countryId) {
     .onSnapshot({ includeMetadataChanges: true }, snapshot => {
       coinList.innerHTML = '';
       
+      if (snapshot.empty) {
+        coinList.innerHTML = `<p class="text-xs text-slate-400 italic p-2">Noch keine Münzen eingetragen.</p>`;
+        return;
+      }
+
       snapshot.forEach(doc => {
         const coin = doc.data();
         const item = document.createElement('div');
@@ -159,7 +178,7 @@ function loadCoins(countryId) {
               </div>
             </div>
           </div>
-          <button onclick="deleteCoin('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 bg-rose-100 p-2 rounded-lg font-bold">
+          <button onclick="deleteCoin('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 bg-rose-100 p-2 rounded-lg font-bold transition">
             🗑️
           </button>
         `;
@@ -168,5 +187,5 @@ function loadCoins(countryId) {
     });
 }
 
-// Initialer Start
+// Initialer Start der Anwendung
 loadCountries();

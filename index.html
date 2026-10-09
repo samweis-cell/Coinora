@@ -3,96 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coinora - Münzsammel App</title>
+  <title>Coinora</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-10">
+<body class="bg-slate-100 text-slate-900 min-h-screen p-4 md:p-8 font-sans">
 
-  <!-- Header -->
-  <header class="bg-indigo-600 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-50">
-    <h1 class="text-xl font-bold">🪙 Coinora Euro-Sammlung</h1>
-    <div id="sync-status" class="text-xs bg-indigo-700 px-2 py-1 rounded">Lädt...</div>
-  </header>
-
-  <main class="max-w-xl mx-auto p-4">
-
-    <!-- Hauptkategorien (Große Ordner) -->
-    <section id="category-selection" class="mb-6">
-      <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Sammlungen</h2>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="selectCategory('laender')" id="btn-laender" class="p-4 bg-white rounded-xl shadow border-2 border-indigo-500 font-medium text-left hover:bg-slate-50 transition">
-          🌍 Länder-Münzen
-        </button>
-        <button onclick="selectCategory('gedenk')" id="btn-gedenk" class="p-4 bg-white rounded-xl shadow border-2 border-transparent font-medium text-left hover:bg-slate-50 transition">
-          ⭐ 2€ Gedenkmünzen
-        </button>
+  <div class="max-w-2xl mx-auto space-y-6">
+    
+    <!-- Kopfzeile mit App-Name und Versionsnummer -->
+    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Coinora</h1>
+        <p class="text-xs text-slate-500">Münzsammlung Synchronisieren</p>
       </div>
-    </section>
+      <!-- Versionsanzeige -->
+      <span id="app-version" class="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md font-mono font-bold">
+        v1.0.1
+      </span>
+    </div>
 
-    <!-- Land hinzufügen -->
-    <section class="bg-white p-4 rounded-xl shadow mb-6">
-      <h3 class="text-md font-bold mb-2">Neues Land hinzufügen</h3>
+    <!-- Kategorie-Aktivierung (Kursmünzen vs. Gedenkmünzen) -->
+    <div class="grid grid-cols-2 gap-4">
+      <button id="btn-laender" onclick="selectCategory('laender')" class="p-4 bg-white rounded-xl shadow border-2 border-indigo-500 font-medium text-left transition">
+        🌍 Kursmünzen
+      </button>
+      <button id="btn-gedenk" onclick="selectCategory('gedenk')" class="p-4 bg-white rounded-xl shadow border-2 border-transparent font-medium text-left transition">
+        ⭐ 2€ Gedenkmünzen
+      </button>
+    </div>
+
+    <!-- Neues Land / Neue Kategorie hinzufügen -->
+    <div class="bg-white p-4 rounded-xl shadow space-y-3">
+      <h2 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Eintrag hinzufügen</h2>
       <div class="flex gap-2">
-        <input type="text" id="new-country-name" placeholder="z. B. Deutschland, Italien" class="flex-1 p-2 border rounded-lg text-sm outline-none focus:border-indigo-500">
-        <button onclick="addCountry()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Erstellen</button>
+        <input type="text" id="new-country-name" placeholder="z. B. Deutschland, Frankreich..." class="flex-1 p-3 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <button onclick="addCountry()" class="bg-indigo-600 text-white px-5 py-3 rounded-lg font-medium hover:bg-indigo-700 transition">
+          Hinzufügen
+        </button>
       </div>
-    </section>
+    </div>
 
-    <!-- Länder-Ordner Liste -->
-    <section>
-      <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Länder</h2>
-      <div id="country-list" class="space-y-3">
-        <!-- Dynamische Befüllung -->
+    <!-- Liste der erfassten Länder -->
+    <div class="space-y-3">
+      <h2 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Übersicht</h2>
+      <div id="country-list" class="space-y-2">
+        <p class="text-sm text-slate-400 italic">Lade Einträge...</p>
       </div>
-    </section>
+    </div>
 
-  </main>
+  </div>
 
-  <!-- Modal: Münzen eines Landes -->
-  <div id="coin-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-white w-full max-w-xl rounded-t-2xl sm:rounded-2xl max-h-[90vh] flex flex-col shadow-2xl">
-      <div class="p-4 border-b flex justify-between items-center sticky top-0 bg-white rounded-t-2xl">
-        <h3 id="modal-title" class="text-lg font-bold">Münzen</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
-      </div>
+  <!-- Detail-Modal für Münzen eines Landes -->
+  <div id="coin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-lg w-full space-y-4 max-h-[90vh] flex flex-col shadow-2xl">
       
-      <div id="modal-content" class="p-4 overflow-y-auto space-y-4">
-        <!-- Formular für neue Münze -->
-        <div class="bg-slate-50 p-3 rounded-lg border">
-          <h4 class="text-xs font-bold uppercase text-slate-500 mb-2">Münze eintragen / aktualisieren</h4>
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <select id="coin-value" class="p-2 border rounded text-sm bg-white">
-              <option value="1 ct">1 Cent</option>
-              <option value="2 ct">2 Cent</option>
-              <option value="5 ct">5 Cent</option>
-              <option value="10 ct">10 Cent</option>
-              <option value="20 ct">20 Cent</option>
-              <option value="50 ct">50 Cent</option>
-              <option value="1 €">1 Euro</option>
-              <option value="2 €">2 Euro</option>
-            </select>
-            <label class="flex items-center gap-2 text-sm bg-white p-2 border rounded cursor-pointer">
-              <input type="checkbox" id="coin-owned" class="rounded text-indigo-600">
-              <span>Im Besitz</span>
-            </label>
-          </div>
-          <input type="file" id="coin-image" accept="image/*" class="text-xs w-full mb-2">
-          <button onclick="saveCoin()" class="w-full bg-emerald-600 text-white py-2 rounded text-sm font-medium hover:bg-emerald-700">Speichern</button>
-        </div>
-
-        <!-- Münzliste im Land -->
-        <div id="coin-list" class="space-y-2">
-          <!-- Dynamische Liste -->
-        </div>
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="modal-title" class="font-bold text-lg text-slate-800">Münzen verwalten</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
       </div>
+
+      <!-- Eingabe für neue Münzen -->
+      <div class="bg-slate-50 p-3 rounded-xl border space-y-3">
+        <div class="flex gap-2">
+          <input type="text" id="coin-value" placeholder="Münzwert (z. B. 2 Euro, 10 Cent)" class="flex-1 p-2 border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <label class="flex items-center gap-2 text-sm font-medium px-2 cursor-pointer">
+            <input type="checkbox" id="coin-owned" class="w-4 h-4 text-indigo-600 rounded">
+            Vorhanden
+          </label>
+        </div>
+        <button onclick="saveCoin()" class="w-full bg-slate-800 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-900 transition">
+          Münze speichern
+        </button>
+      </div>
+
+      <!-- Münzliste inside Modal -->
+      <div id="coin-list" class="space-y-2 overflow-y-auto flex-1 pr-1">
+        <!-- Dynamische Befüllung durch JavaScript -->
+      </div>
+
+      <button onclick="closeModal()" class="w-full py-2 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition text-sm">
+        Schließen
+      </button>
     </div>
   </div>
 
-  <!-- Firebase Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+  <!-- JavaScript-Einbindung -->
   <script src="app.js"></script>
 </body>
 </html>
+
 
