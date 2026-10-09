@@ -1,15 +1,50 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.0.9";
+const APP_VERSION = "1.1.0";
 
-// Version auf der Webseite anzeigen
+// Standardmäßig startet die App im Bearbeitungsmodus
+let isEditMode = true;
+
 document.addEventListener("DOMContentLoaded", () => {
   const versionElem = document.getElementById("app-version");
   if (versionElem) versionElem.innerText = `v${APP_VERSION}`;
+  updateUiForMode();
 });
+
+// Umschalten zwischen Bearbeiten und Beobachten
+function toggleEditMode() {
+  isEditMode = !isEditMode;
+  updateUiForMode();
+  loadCountries();
+  if (currentCountryId) {
+    loadCoins(currentCountryId);
+  }
+}
+
+// UI entsprechend des Modus anpassen
+function updateUiForMode() {
+  const btn = document.getElementById("toggle-edit-btn");
+  const modeIcon = document.getElementById("mode-icon");
+  const modeLabel = document.getElementById("mode-label");
+  const addCountryBox = document.getElementById("add-country-box");
+  const addCoinBox = document.getElementById("add-coin-box");
+
+  if (isEditMode) {
+    btn.className = "text-xs px-3 py-1.5 rounded-xl border transition font-medium flex items-center gap-1.5 bg-indigo-600 border-indigo-500 text-white shadow-md";
+    modeIcon.innerText = "✏️";
+    modeLabel.innerText = "Bearbeiten";
+    if (addCountryBox) addCountryBox.classList.remove("hidden");
+    if (addCoinBox) addCoinBox.classList.remove("hidden");
+  } else {
+    btn.className = "text-xs px-3 py-1.5 rounded-xl border transition font-medium flex items-center gap-1.5 bg-emerald-600/30 border-emerald-500/40 text-emerald-300 shadow-md";
+    modeIcon.innerText = "👁️";
+    modeLabel.innerText = "Beobachten";
+    if (addCountryBox) addCountryBox.classList.add("hidden");
+    if (addCoinBox) addCoinBox.classList.add("hidden");
+  }
+}
 
 let selectedImageBase64 = "";
 
-// Bild aus Galerie auswählen und für Speicherung komprimieren
 function handleImageSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -18,7 +53,6 @@ function handleImageSelect(event) {
   reader.onload = function(e) {
     const img = new Image();
     img.onload = function() {
-      // Bild für Speicherung verkleinern (max 400px), damit Firestore nicht überlastet wird
       const canvas = document.createElement('canvas');
       const MAX_WIDTH = 400;
       const MAX_HEIGHT = 400;
@@ -44,7 +78,6 @@ function handleImageSelect(event) {
 
       selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
-      // Vorschau anzeigen
       document.getElementById('image-preview').src = selectedImageBase64;
       document.getElementById('image-preview-container').classList.remove('hidden');
     };
@@ -53,20 +86,17 @@ function handleImageSelect(event) {
   reader.readAsDataURL(file);
 }
 
-// Ausgewähltes Bild entfernen
 function removeSelectedImage() {
   selectedImageBase64 = "";
   document.getElementById('coin-image-file').value = "";
   document.getElementById('image-preview-container').classList.add('hidden');
 }
 
-// Schnellauswahl für Münzwerte
 function setCoinValue(val) {
   const input = document.getElementById('coin-value');
   if (input) input.value = val;
 }
 
-// Hilfsfunktion: Wandelt Text-Münzwerte in numerische Werte in Cent um (für korrekte Sortierung)
 function parseCoinValueToCent(valStr) {
   if (!valStr) return 0;
   const str = valStr.trim().toLowerCase();
@@ -85,7 +115,6 @@ function parseCoinValueToCent(valStr) {
   return num <= 2 ? Math.round(num * 100) : Math.round(num);
 }
 
-// Hilfsfunktion: Prüft, ob ein Ländername im Text ENTHALTEN ist
 function getFlagEmoji(countryName) {
   if (!countryName) return '🪙';
   const name = countryName.trim().toLowerCase();
@@ -125,7 +154,6 @@ function getFlagEmoji(countryName) {
   return found ? found.flag : '🌍';
 }
 
-// Deine Firebase-Konfiguration
 const firebaseConfig = {
   apiKey: "AIzaSyAKbAGnQ-yyt-sCKNLy4vtlArHk91752wg",
   authDomain: "coinora-d6fff.firebaseapp.com",
@@ -135,11 +163,9 @@ const firebaseConfig = {
   appId: "1:154896515786:web:e3212be0b8fb757b332a33"
 };
 
-// Firebase Initialisierung
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Offline Persistence
 db.enablePersistence({ synchronizeTabs: true })
   .then(() => {
     console.log("Lokale Speicherung aktiv!");
@@ -151,7 +177,6 @@ db.enablePersistence({ synchronizeTabs: true })
 let currentCategory = 'laender';
 let currentCountryId = null;
 
-// Kategorie wechseln
 function selectCategory(cat) {
   currentCategory = cat;
   
@@ -169,8 +194,8 @@ function selectCategory(cat) {
   loadCountries();
 }
 
-// Neues Land hinzufügen
 async function addCountry() {
+  if (!isEditMode) return;
   const nameInput = document.getElementById('new-country-name');
   const name = nameInput.value.trim();
   if (!name) return;
@@ -187,9 +212,9 @@ async function addCountry() {
   }
 }
 
-// Land löschen
 async function deleteCountry(countryId, countryName, event) {
   event.stopPropagation();
+  if (!isEditMode) return;
 
   if (confirm(`Möchtest du "${countryName}" wirklich komplett löschen?`)) {
     try {
@@ -200,7 +225,6 @@ async function deleteCountry(countryId, countryName, event) {
   }
 }
 
-// Länder als Kacheln laden (MIT DYNAMISCHER FORTSCHRITTSANZEIGE)
 function loadCountries() {
   const list = document.getElementById('country-list');
   
@@ -230,10 +254,15 @@ function loadCountries() {
         card.className = "relative group bg-slate-800 border border-slate-700/80 hover:border-indigo-500/50 p-4 rounded-2xl shadow-lg flex flex-col items-center justify-between text-center cursor-pointer transition transform active:scale-95 min-h-[145px]";
         card.onclick = () => openCountryModal(data.id, data.name);
         
-        card.innerHTML = `
+        // Löschen-Button wird im Beobachtungsmodus ausgeblendet
+        const deleteBtnHtml = isEditMode ? `
           <button onclick="deleteCountry('${data.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100 z-10">
             🗑️
           </button>
+        ` : '';
+
+        card.innerHTML = `
+          ${deleteBtnHtml}
           
           <div class="w-11 h-11 rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center text-2xl mb-1 shadow-inner">
             ${flag}
@@ -284,7 +313,6 @@ function loadCountries() {
     });
 }
 
-// Modal öffnen
 function openCountryModal(countryId, countryName) {
   currentCountryId = countryId;
   const flag = getFlagEmoji(countryName);
@@ -293,15 +321,14 @@ function openCountryModal(countryId, countryName) {
   loadCoins(countryId);
 }
 
-// Modal schließen
 function closeModal() {
   document.getElementById('coin-modal').classList.add('hidden');
   currentCountryId = null;
   removeSelectedImage();
 }
 
-// Neue Münze speichern (inkl. Bild)
 async function saveCoin() {
+  if (!isEditMode) return;
   const valueInput = document.getElementById('coin-value');
   const titleInput = document.getElementById('coin-title');
   const urlInput = document.getElementById('coin-image-url');
@@ -332,7 +359,6 @@ async function saveCoin() {
   }
 }
 
-// Status umschalten
 async function toggleCoinOwned(coinId, currentStatus, event) {
   event.stopPropagation();
   try {
@@ -344,9 +370,10 @@ async function toggleCoinOwned(coinId, currentStatus, event) {
   }
 }
 
-// Einzelne Münze löschen
 async function deleteCoin(coinId, event) {
   event.stopPropagation();
+  if (!isEditMode) return;
+
   try {
     await db.collection('countries').doc(currentCountryId).collection('coins').doc(coinId).delete();
   } catch (error) {
@@ -354,7 +381,6 @@ async function deleteCoin(coinId, event) {
   }
 }
 
-// Münzen als Kachel-Grid laden (MIT FOTO-ANZEIGE)
 function loadCoins(countryId) {
   const coinList = document.getElementById('coin-list');
 
@@ -397,12 +423,16 @@ function loadCoins(countryId) {
         card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[140px]`;
         card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
 
-        card.innerHTML = `
+        // Löschen-Button nur im Bearbeitungsmodus anzeigen
+        const deleteBtnHtml = isEditMode ? `
           <button onclick="deleteCoin('${coin.id}', event)" class="absolute top-2 right-2 text-xs text-rose-400 hover:text-rose-300 bg-slate-800/80 hover:bg-rose-950/60 p-1 rounded-lg transition opacity-70 group-hover:opacity-100 z-10">
             🗑️
           </button>
+        ` : '';
 
-          <!-- Foto-Anzeige falls vorhanden -->
+        card.innerHTML = `
+          ${deleteBtnHtml}
+
           ${coin.imageUrl ? `
             <div class="w-full h-24 mb-2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
               <img src="${coin.imageUrl}" class="w-full h-full object-cover" alt="${coin.value}">
@@ -426,9 +456,4 @@ function loadCoins(countryId) {
     });
 }
 
-// Initialer Start der Anwendung
 loadCountries();
-
-
-
-
