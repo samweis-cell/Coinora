@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.0.4";
 
 // Version auf der Webseite anzeigen
 document.addEventListener("DOMContentLoaded", () => {
@@ -7,44 +7,46 @@ document.addEventListener("DOMContentLoaded", () => {
   if (versionElem) versionElem.innerText = `v${APP_VERSION}`;
 });
 
-// Hilfsfunktion: Wandelt den Ländernamen automatisch in ein Flaggen-Emoji um
+// Hilfsfunktion: Prüft, ob ein Ländername im Text ENTHALTEN ist
 function getFlagEmoji(countryName) {
   if (!countryName) return '🪙';
   const name = countryName.trim().toLowerCase();
 
-  const flags = {
-    'deutschland': '🇩🇪',
-    'italien': '🇮🇹',
-    'frankreich': '🇫🇷',
-    'spanien': '🇪🇸',
-    'österreich': '🇦🇹',
-    'oesterreich': '🇦🇹',
-    'niederlande': '🇳🇱',
-    'belgien': '🇧🇪',
-    'griechenland': '🇬🇷',
-    'portugal': '🇵🇹',
-    'finnland': '🇫🇮',
-    'irland': '🇮🇪',
-    'slowakei': '🇸🇰',
-    'slowenien': '🇸🇮',
-    'kroatien': '🇭🇷',
-    'estland': '🇪🇪',
-    'lettland': '🇱🇻',
-    'litauen': '🇱🇹',
-    'luxemburg': '🇱🇺',
-    'malta': '🇲🇹',
-    'zypern': '🇨🇾',
-    'monaco': '🇲🇨',
-    'san marino': '🇸🇲',
-    'vatikan': '🇻🇦',
-    'vatikanstadt': '🇻🇦',
-    'andorra': '🇦🇩',
-    'bulgarien': '🇧🇬',
-    'rumänien': '🇷🇴',
-    'rumaenien': '🇷🇴'
-  };
+  const flags = [
+    { key: 'deutschland', flag: '🇩🇪' },
+    { key: 'italien', flag: '🇮🇹' },
+    { key: 'frankreich', flag: '🇫🇷' },
+    { key: 'spanien', flag: '🇪🇸' },
+    { key: 'österreich', flag: '🇦🇹' },
+    { key: 'oesterreich', flag: '🇦🇹' },
+    { key: 'niederlande', flag: '🇳🇱' },
+    { key: 'belgien', flag: '🇧🇪' },
+    { key: 'griechenland', flag: '🇬🇷' },
+    { key: 'portugal', flag: '🇵🇹' },
+    { key: 'finnland', flag: '🇫🇮' },
+    { key: 'irland', flag: '🇮🇪' },
+    { key: 'slowakei', flag: '🇸🇰' },
+    { key: 'slowenien', flag: '🇸🇮' },
+    { key: 'kroatien', flag: '🇭🇷' },
+    { key: 'estland', flag: '🇪🇪' },
+    { key: 'lettland', flag: '🇱🇻' },
+    { key: 'litauen', flag: '🇱🇹' },
+    { key: 'luxemburg', flag: '🇱🇺' },
+    { key: 'malta', flag: '🇲🇹' },
+    { key: 'zypern', flag: '🇨🇾' },
+    { key: 'monaco', flag: '🇲🇨' },
+    { key: 'san marino', flag: '🇸🇲' },
+    { key: 'vatikan', flag: '🇻🇦' },
+    { key: 'andorra', flag: '🇦🇩' },
+    { key: 'bulgarien', flag: '🇧🇬' },
+    { key: 'rumänien', flag: '🇷🇴' },
+    { key: 'rumaenien', flag: '🇷🇴' }
+  ];
 
-  return flags[name] || '🌍';
+  // Sucht, ob einer der Schlüsselbegriffe im Text vorkommt
+  const found = flags.find(item => name.includes(item.key));
+  
+  return found ? found.flag : '🌍';
 }
 
 // Deine Firebase-Konfiguration
@@ -139,7 +141,7 @@ function loadCountries() {
         const data = doc.data();
         const card = document.createElement('div');
         
-        // Flaggen-Emoji für das Land ermitteln
+        // Flaggen-Emoji für das Land ermitteln (jetzt mit Teiltext-Suche)
         const flag = getFlagEmoji(data.name);
 
         // Styling als abgerundeter Block / Karte
