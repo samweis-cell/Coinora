@@ -1,11 +1,51 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.0.2";
+const APP_VERSION = "1.0.3";
 
 // Version auf der Webseite anzeigen
 document.addEventListener("DOMContentLoaded", () => {
   const versionElem = document.getElementById("app-version");
   if (versionElem) versionElem.innerText = `v${APP_VERSION}`;
 });
+
+// Hilfsfunktion: Wandelt den Ländernamen automatisch in ein Flaggen-Emoji um
+function getFlagEmoji(countryName) {
+  if (!countryName) return '🪙';
+  const name = countryName.trim().toLowerCase();
+
+  const flags = {
+    'deutschland': '🇩🇪',
+    'italien': '🇮🇹',
+    'frankreich': '🇫🇷',
+    'spanien': '🇪🇸',
+    'österreich': '🇦🇹',
+    'oesterreich': '🇦🇹',
+    'niederlande': '🇳🇱',
+    'belgien': '🇧🇪',
+    'griechenland': '🇬🇷',
+    'portugal': '🇵🇹',
+    'finnland': '🇫🇮',
+    'irland': '🇮🇪',
+    'slowakei': '🇸🇰',
+    'slowenien': '🇸🇮',
+    'kroatien': '🇭🇷',
+    'estland': '🇪🇪',
+    'lettland': '🇱🇻',
+    'litauen': '🇱🇹',
+    'luxemburg': '🇱🇺',
+    'malta': '🇲🇹',
+    'zypern': '🇨🇾',
+    'monaco': '🇲🇨',
+    'san marino': '🇸🇲',
+    'vatikan': '🇻🇦',
+    'vatikanstadt': '🇻🇦',
+    'andorra': '🇦🇩',
+    'bulgarien': '🇧🇬',
+    'rumänien': '🇷🇴',
+    'rumaenien': '🇷🇴'
+  };
+
+  return flags[name] || '🌍';
+}
 
 // Deine Firebase-Konfiguration
 const firebaseConfig = {
@@ -99,8 +139,11 @@ function loadCountries() {
         const data = doc.data();
         const card = document.createElement('div');
         
+        // Flaggen-Emoji für das Land ermitteln
+        const flag = getFlagEmoji(data.name);
+
         // Styling als abgerundeter Block / Karte
-        card.className = "relative group bg-slate-800 border border-slate-700 hover:border-indigo-500/50 p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center cursor-pointer transition transform active:scale-95 min-h-[130px]";
+        card.className = "relative group bg-slate-800 border border-slate-700/80 hover:border-indigo-500/50 p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center cursor-pointer transition transform active:scale-95 min-h-[130px]";
         card.onclick = () => openCountryModal(doc.id, data.name);
         
         card.innerHTML = `
@@ -109,9 +152,9 @@ function loadCountries() {
             🗑️
           </button>
           
-          <!-- Symbol / Icon im Kreis (wie in der Beispiel-App) -->
-          <div class="w-12 h-12 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-xl mb-3 shadow-inner">
-            ${currentCategory === 'laender' ? '🪙' : '⭐'}
+          <!-- Flagge im Kreis -->
+          <div class="w-12 h-12 rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center text-2xl mb-3 shadow-inner">
+            ${flag}
           </div>
           
           <!-- Land Name -->
@@ -128,7 +171,8 @@ function loadCountries() {
 // Modal öffnen
 function openCountryModal(countryId, countryName) {
   currentCountryId = countryId;
-  document.getElementById('modal-title').innerText = `${countryName} (${currentCategory === 'laender' ? 'Kursmünzen' : '2€ Gedenk'})`;
+  const flag = getFlagEmoji(countryName);
+  document.getElementById('modal-title').innerText = `${flag} ${countryName} (${currentCategory === 'laender' ? 'Kursmünzen' : '2€ Gedenk'})`;
   document.getElementById('coin-modal').classList.remove('hidden');
   loadCoins(countryId);
 }
