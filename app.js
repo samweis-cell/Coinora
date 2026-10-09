@@ -1,11 +1,17 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.0.7";
+const APP_VERSION = "1.0.8";
 
 // Version auf der Webseite anzeigen
 document.addEventListener("DOMContentLoaded", () => {
   const versionElem = document.getElementById("app-version");
   if (versionElem) versionElem.innerText = `v${APP_VERSION}`;
 });
+
+// Schnellauswahl für Münzwerte
+function setCoinValue(val) {
+  const input = document.getElementById('coin-value');
+  if (input) input.value = val;
+}
 
 // Hilfsfunktion: Wandelt Text-Münzwerte in numerische Werte in Cent um (für korrekte Sortierung)
 function parseCoinValueToCent(valStr) {
@@ -141,7 +147,7 @@ async function deleteCountry(countryId, countryName, event) {
   }
 }
 
-// Länder als Kacheln laden
+// Länder als Kacheln laden (MIT DYNAMISCHER FORTSCHRITTSANZEIGE)
 function loadCountries() {
   const list = document.getElementById('country-list');
   
@@ -168,22 +174,60 @@ function loadCountries() {
         const card = document.createElement('div');
         const flag = getFlagEmoji(data.name);
 
-        card.className = "relative group bg-slate-800 border border-slate-700/80 hover:border-indigo-500/50 p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center cursor-pointer transition transform active:scale-95 min-h-[130px]";
+        card.className = "relative group bg-slate-800 border border-slate-700/80 hover:border-indigo-500/50 p-4 rounded-2xl shadow-lg flex flex-col items-center justify-between text-center cursor-pointer transition transform active:scale-95 min-h-[145px]";
         card.onclick = () => openCountryModal(data.id, data.name);
         
+        // Platzhalter für Kachel-Inhalt (Fortschritt wird in Realtime geladen)
         card.innerHTML = `
-          <button onclick="deleteCountry('${data.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100">
+          <button onclick="deleteCountry('${data.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100 z-10">
             🗑️
           </button>
           
-          <div class="w-12 h-12 rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center text-2xl mb-3 shadow-inner">
+          <div class="w-11 h-11 rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center text-2xl mb-1 shadow-inner">
             ${flag}
           </div>
           
-          <span class="font-semibold text-sm text-slate-100 line-clamp-1">${data.name}</span>
-          <span class="text-[10px] text-indigo-400 mt-1 font-medium">Tippen zum Öffnen</span>
+          <span class="font-semibold text-sm text-slate-100 line-clamp-1 mb-2">${data.name}</span>
+          
+          <!-- Fortschrittsbalken-Container -->
+          <div class="w-full space-y-1">
+            <div class="flex justify-between items-center text-[10px] font-medium text-slate-400">
+              <span id="progress-text-${data.id}">0/0 Münzen</span>
+              <span id="progress-percent-${data.id}">0%</span>
+            </div>
+            <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-slate-700/50">
+              <div id="progress-bar-${data.id}" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
         `;
         list.appendChild(card);
+
+        // Echtzeit-Berechnung des Fortschritts für dieses Land
+        db.collection('countries').doc(data.id).collection('coins').onSnapshot(coinsSnapshot => {
+          const totalCoins = coinsSnapshot.size;
+          let ownedCoins = 0;
+          
+          coinsSnapshot.forEach(coinDoc => {
+            if (coinDoc.data().owned) ownedCoins++;
+          });
+
+          const percent = totalCoins > 0 ? Math.round((ownedCoins / totalCoins) * 100) : 0;
+
+          const textElem = document.getElementById(`progress-text-${data.id}`);
+          const percentElem = document.getElementById(`progress-percent-${data.id}`);
+          const barElem = document.getElementById(`progress-bar-${data.id}`);
+
+          if (textElem) textElem.innerText = `${ownedCoins}/${totalCoins} Münzen`;
+          if (percentElem) percentElem.innerText = `${percent}%`;
+          if (barElem) {
+            barElem.style.width = `${percent}%`;
+            if (percent === 100 && totalCoins > 0) {
+              barElem.className = "bg-emerald-500 h-full rounded-full transition-all duration-500";
+            } else {
+              barElem.className = "bg-indigo-500 h-full rounded-full transition-all duration-500";
+            }
+          }
+        });
       });
     }, error => {
       console.error("Fehler beim Laden:", error);
@@ -205,7 +249,7 @@ function closeModal() {
   currentCountryId = null;
 }
 
-// Neue Münze speichern (unterstützt jetzt Werte & Titel/Motiv)
+// Neue Münze speichern
 async function saveCoin() {
   const valueInput = document.getElementById('coin-value');
   const titleInput = document.getElementById('coin-title');
@@ -215,7 +259,6 @@ async function saveCoin() {
 
   if (!value) return;
 
-  // Generiert eine eindeutige ID in Firestore für Mehrfach-Einträge gleicher Wertstufe
   try {
     await db.collection('countries').doc(currentCountryId).collection('coins').add({
       value: value,
@@ -232,7 +275,7 @@ async function saveCoin() {
   }
 }
 
-// Status einer Münze direkt per Klick umschalten (Vorhanden / Fehlt)
+// Status umschalten
 async function toggleCoinOwned(coinId, currentStatus, event) {
   event.stopPropagation();
   try {
@@ -254,7 +297,7 @@ async function deleteCoin(coinId, event) {
   }
 }
 
-// Münzen als KACHELN (GRID) im Modal laden
+// Münzen als Kachel-Grid laden
 function loadCoins(countryId) {
   const coinList = document.getElementById('coin-list');
 
@@ -275,7 +318,6 @@ function loadCoins(countryId) {
         });
       });
 
-      // Nach Wert sortieren, bei gleichem Wert nach Titel
       coins.sort((a, b) => {
         const valA = parseCoinValueToCent(a.value);
         const valB = parseCoinValueToCent(b.value);
@@ -283,11 +325,9 @@ function loadCoins(countryId) {
         return (a.title || '').localeCompare(b.title || '');
       });
 
-      // Münz-Kacheln erstellen
       coins.forEach(coin => {
         const card = document.createElement('div');
         
-        // Farbliche Unterscheidung je nach Besitz-Status
         const isOwned = coin.owned;
         const bgClass = isOwned 
           ? 'bg-emerald-950/40 border-emerald-600/60 hover:border-emerald-500' 
@@ -298,23 +338,18 @@ function loadCoins(countryId) {
           : 'bg-slate-800 text-slate-400 border-slate-700';
 
         card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[110px]`;
-        
-        // Klick auf die Karte schaltet den Status um!
         card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
 
         card.innerHTML = `
-          <!-- Mülleimer oben rechts -->
           <button onclick="deleteCoin('${coin.id}', event)" class="absolute top-2 right-2 text-xs text-rose-400 hover:text-rose-300 bg-slate-800/80 hover:bg-rose-950/60 p-1 rounded-lg transition opacity-70 group-hover:opacity-100">
             🗑️
           </button>
 
-          <!-- Münzwert & Titel -->
           <div class="pr-5 space-y-1">
             <span class="font-bold text-base text-white block leading-tight">${coin.value}</span>
             ${coin.title ? `<span class="text-xs text-slate-300 block line-clamp-2 leading-snug">${coin.title}</span>` : ''}
           </div>
 
-          <!-- Status-Badge unten -->
           <div class="mt-3 flex items-center justify-between">
             <span class="text-[10px] px-2 py-0.5 rounded-md border font-semibold ${badgeClass}">
               ${isOwned ? '✓ Vorhanden' : 'Fehlt'}

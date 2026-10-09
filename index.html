@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coinora</title>
   
+  <!-- PWA & Mobile Web App Support -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coinora">
+  
+  <!-- SVG App Icon (Generiert dynamisch ein Münz-Icon) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%236366f1' stroke='%23818cf8' stroke-width='4'/><circle cx='50' cy='50' r='38' fill='none' stroke='%23a5b4fc' stroke-width='2' stroke-dasharray='4 2'/><text x='50' y='62' font-size='40' font-weight='bold' text-anchor='middle' fill='white' font-family='sans-serif'>€</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><circle cx='50' cy='50' r='38' fill='%236366f1'/><text x='50' y='62' font-size='38' font-weight='bold' text-anchor='middle' fill='white' font-family='sans-serif'>€</text></svg>">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -24,7 +34,7 @@
       </div>
       <!-- Versionsanzeige -->
       <span id="app-version" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-md font-mono font-bold">
-        v1.0.7
+        v1.0.8
       </span>
     </div>
 
@@ -69,8 +79,24 @@
         <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
       </div>
 
-      <!-- Eingabe für neue Münzen mit Name/Motiv -->
+      <!-- Eingabe für neue Münzen mit Schnellauswahl -->
       <div class="bg-slate-900 p-4 rounded-2xl border border-slate-700 space-y-3">
+        
+        <!-- Schnellauswahl Buttons -->
+        <div>
+          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Schnellauswahl Münzwert</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="setCoinValue('1 Cent')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">1 ct</button>
+            <button onclick="setCoinValue('2 Cent')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">2 ct</button>
+            <button onclick="setCoinValue('5 Cent')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">5 ct</button>
+            <button onclick="setCoinValue('10 Cent')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">10 ct</button>
+            <button onclick="setCoinValue('20 Cent')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">20 ct</button>
+            <button onclick="setCoinValue('50 Cent')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">50 ct</button>
+            <button onclick="setCoinValue('1 Euro')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">1 €</button>
+            <button onclick="setCoinValue('2 Euro')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">2 €</button>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input type="text" id="coin-value" placeholder="Wert (z. B. 2 Euro, 5 Cent)" class="p-2.5 border border-slate-700 rounded-xl bg-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           <input type="text" id="coin-title" placeholder="Motiv / Jahr / Name (optional)" class="p-2.5 border border-slate-700 rounded-xl bg-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -98,8 +124,9 @@
     </div>
   </div>
 
-  <!-- JavaScript-Einbindung mit Cache-Buster Parameter v1.0.7 -->
-  <script src="app.js?v=1.0.7"></script>
+  <!-- JavaScript-Einbindung mit Cache-Buster Parameter v1.0.8 -->
+  <script src="app.js?v=1.0.8"></script>
 </body>
 </html>
+
 
