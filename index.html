@@ -52,7 +52,7 @@
     <!-- Raster / Grid der erfassten Länder -->
     <div class="space-y-3">
       <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Übersicht</h2>
-      <!-- Hier entsteht das Block-Grid (2 Spalten auf Handys, 3 auf größeren Bildschirmen) -->
+      <!-- Block-Grid (2 Spalten auf Handys, 3 auf größeren Bildschirmen) -->
       <div id="country-list" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <p class="text-sm text-slate-500 italic col-span-2 sm:col-span-3">Lade Einträge...</p>
       </div>
@@ -94,7 +94,8 @@
     </div>
   </div>
 
-  <!-- JavaScript-Einbindung -->
-  <script src="app.js"></script>
+  <!-- JavaScript-Einbindung mit Cache-Buster Parameter -->
+  <script src="app.js?v=1.0.2"></script>
 </body>
 </html>
+
