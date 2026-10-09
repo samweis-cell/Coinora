@@ -24,7 +24,7 @@
       </div>
       <!-- Versionsanzeige -->
       <span id="app-version" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-md font-mono font-bold">
-        v1.0.6
+        v1.0.7
       </span>
     </div>
 
@@ -62,29 +62,33 @@
 
   <!-- Detail-Modal für Münzen eines Landes -->
   <div id="coin-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-lg w-full space-y-4 max-h-[90vh] flex flex-col shadow-2xl text-white">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-xl w-full space-y-4 max-h-[90vh] flex flex-col shadow-2xl text-white">
       
       <div class="flex justify-between items-center border-b border-slate-700 pb-3">
         <h3 id="modal-title" class="font-bold text-lg text-white">Münzen verwalten</h3>
         <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
       </div>
 
-      <!-- Eingabe für neue Münzen -->
-      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-700 space-y-3">
-        <div class="flex gap-2">
-          <input type="text" id="coin-value" placeholder="Münzwert (z. B. 2 Euro, 10 Cent)" class="flex-1 p-2 border border-slate-700 rounded-xl bg-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <label class="flex items-center gap-2 text-sm font-medium px-2 cursor-pointer text-slate-300">
-            <input type="checkbox" id="coin-owned" class="w-4 h-4 text-indigo-600 rounded">
+      <!-- Eingabe für neue Münzen mit Name/Motiv -->
+      <div class="bg-slate-900 p-4 rounded-2xl border border-slate-700 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input type="text" id="coin-value" placeholder="Wert (z. B. 2 Euro, 5 Cent)" class="p-2.5 border border-slate-700 rounded-xl bg-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="coin-title" placeholder="Motiv / Jahr / Name (optional)" class="p-2.5 border border-slate-700 rounded-xl bg-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex items-center gap-2 text-sm font-medium cursor-pointer text-slate-300">
+            <input type="checkbox" id="coin-owned" class="w-4 h-4 text-indigo-600 rounded accent-indigo-500">
             Vorhanden
           </label>
+          <button onclick="saveCoin()" class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-indigo-500 transition shadow">
+            Münze speichern
+          </button>
         </div>
-        <button onclick="saveCoin()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-indigo-500 transition">
-          Münze speichern
-        </button>
       </div>
 
-      <!-- Münzliste inside Modal -->
-      <div id="coin-list" class="space-y-2 overflow-y-auto flex-1 pr-1">
+      <!-- Münz-Grid inside Modal (Kachel-Ansicht) -->
+      <div id="coin-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto flex-1 pr-1 py-1">
         <!-- Dynamische Befüllung durch JavaScript -->
       </div>
 
@@ -94,7 +98,8 @@
     </div>
   </div>
 
-  <!-- JavaScript-Einbindung mit Cache-Buster Parameter v1.0.6 -->
-  <script src="app.js?v=1.0.6"></script>
+  <!-- JavaScript-Einbindung mit Cache-Buster Parameter v1.0.7 -->
+  <script src="app.js?v=1.0.7"></script>
 </body>
 </html>
+
