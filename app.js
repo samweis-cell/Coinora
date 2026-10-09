@@ -11,13 +11,18 @@ const firebaseConfig = {
 // Firebase Initialisierung
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const storage = firebase.storage();
 
-let currentCategory = 'laender'; // 'laender' oder 'gedenk'
+// LOKALE SPEICHERUNG AKTIVIEREN (Offline Persistence)
+db.enablePersistence({ synchronizeTabs: true })
+  .then(() => {
+    console.log("Lokale Speicherung aktiv!");
+  })
+  .catch((err) => {
+    console.warn("Offline-Speicher Warnung:", err.code);
+  });
+
+let currentCategory = 'laender';
 let currentCountryId = null;
-
-// Status-Anzeige aktualisieren
-document.getElementById('sync-status').innerText = "🟢 Synchronisiert";
 
 // Kategorie wechseln
 function selectCategory(cat) {
@@ -33,25 +38,28 @@ async function addCountry() {
   const name = nameInput.value.trim();
   if (!name) return;
 
-  await db.collection('countries').add({
-    name: name,
-    category: currentCategory,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  nameInput.value = '';
+  try {
+    await db.collection('countries').add({
+      name: name,
+      category: currentCategory,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    nameInput.value = '';
+  } catch (error) {
+    alert("Fehler beim Speichern: " + error.message);
+  }
 }
 
-// Länder in Echtzeit laden
+// Länder laden (Echtzeit & Lokal)
 function loadCountries() {
   const list = document.getElementById('country-list');
   
   db.collection('countries')
     .where('category', '==', currentCategory)
-    .onSnapshot(snapshot => {
+    .onSnapshot({ includeMetadataChanges: true }, snapshot => {
       list.innerHTML = '';
       if (snapshot.empty) {
-        list.innerHTML = `<p class="text-sm text-slate-400 italic">Noch keine Länder angelegt.</p>`;
+        list.innerHTML = `<p class="text-sm text-slate-400 italic">Noch keine Einträge vorhanden.</p>`;
         return;
       }
 
@@ -66,10 +74,12 @@ function loadCountries() {
         `;
         list.appendChild(card);
       });
+    }, error => {
+      console.error("Fehler beim Laden:", error);
     });
 }
 
-// Modal öffnen für ein bestimmtes Land
+// Modal öffnen
 function openCountryModal(countryId, countryName) {
   currentCountryId = countryId;
   document.getElementById('modal-title').innerText = `${countryName} (${currentCategory === 'laender' ? 'Kursmünzen' : '2€ Gedenk'})`;
@@ -82,43 +92,26 @@ function closeModal() {
   currentCountryId = null;
 }
 
-// Münze speichern (inkl. Bild-Upload)
+// Münze speichern
 async function saveCoin() {
   const value = document.getElementById('coin-value').value;
   const owned = document.getElementById('coin-owned').checked;
-  const imageFile = document.getElementById('coin-image').files[0];
-
-  let imageUrl = null;
-
-  if (imageFile) {
-    const storageRef = storage.ref(`coins/${Date.now()}_${imageFile.name}`);
-    const uploadTask = await storageRef.put(imageFile);
-    imageUrl = await uploadTask.ref.getDownloadURL();
-  }
 
   const coinRef = db.collection('countries').doc(currentCountryId).collection('coins').doc(value);
   
-  const updateData = {
+  await coinRef.set({
     value: value,
     owned: owned,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  
-  if (imageUrl) {
-    updateData.imageUrl = imageUrl;
-  }
-
-  await coinRef.set(updateData, { merge: true });
-
-  document.getElementById('coin-image').value = '';
+  }, { merge: true });
 }
 
-// Münzen eines Landes laden
+// Münzen laden
 function loadCoins(countryId) {
   const coinList = document.getElementById('coin-list');
 
   db.collection('countries').doc(countryId).collection('coins')
-    .onSnapshot(snapshot => {
+    .onSnapshot({ includeMetadataChanges: true }, snapshot => {
       coinList.innerHTML = '';
       
       snapshot.forEach(doc => {
@@ -128,7 +121,6 @@ function loadCoins(countryId) {
         
         item.innerHTML = `
           <div class="flex items-center gap-3">
-            ${coin.imageUrl ? `<img src="${coin.imageUrl}" class="w-12 h-12 object-cover rounded-full border shadow-sm">` : '<div class="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center text-xs text-slate-400">Kein Bild</div>'}
             <div>
               <div class="font-bold text-sm">${coin.value}</div>
               <div class="text-xs ${coin.owned ? 'text-emerald-700 font-semibold' : 'text-slate-400'}">
@@ -142,5 +134,5 @@ function loadCoins(countryId) {
     });
 }
 
-// Initialer Aufruf
+// Initialer Start
 loadCountries();
