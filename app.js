@@ -1,11 +1,32 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.0.5";
+const APP_VERSION = "1.0.6";
 
 // Version auf der Webseite anzeigen
 document.addEventListener("DOMContentLoaded", () => {
   const versionElem = document.getElementById("app-version");
   if (versionElem) versionElem.innerText = `v${APP_VERSION}`;
 });
+
+// Hilfsfunktion: Wandelt Text-Münzwerte in numerische Werte in Cent um (für korrekte Sortierung)
+function parseCoinValueToCent(valStr) {
+  if (!valStr) return 0;
+  const str = valStr.trim().toLowerCase();
+
+  // Reine Zahl extrahieren
+  const match = str.match(/(\d+([.,]\d+)?)/);
+  if (!match) return 999999;
+
+  let num = parseFloat(match[1].replace(',', '.'));
+
+  if (str.includes('euro') || str.includes('€') || str.includes('eur')) {
+    return Math.round(num * 100); // 1 Euro = 100 Cent
+  } else if (str.includes('cent') || str.includes('ct')) {
+    return Math.round(num); // 10 Cent = 10 Cent
+  }
+
+  // Fallback: Wenn > 2 vermuten wir Cent, sonst Euro
+  return num <= 2 ? Math.round(num * 100) : Math.round(num);
+}
 
 // Hilfsfunktion: Prüft, ob ein Ländername im Text ENTHALTEN ist
 function getFlagEmoji(countryName) {
@@ -43,9 +64,7 @@ function getFlagEmoji(countryName) {
     { key: 'rumaenien', flag: '🇷🇴' }
   ];
 
-  // Sucht, ob einer der Schlüsselbegriffe im Text vorkommt
   const found = flags.find(item => name.includes(item.key));
-  
   return found ? found.flag : '🌍';
 }
 
@@ -137,7 +156,6 @@ function loadCountries() {
         return;
       }
 
-      // Dokumente aus Firestore auslesen
       let countries = [];
       snapshot.forEach(doc => {
         countries.push({
@@ -149,29 +167,22 @@ function loadCountries() {
       // Alphabetisch nach Ländernamen sortieren (A-Z)
       countries.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
 
-      // Sortierte Kacheln anzeigen
       countries.forEach(data => {
         const card = document.createElement('div');
-        
-        // Flaggen-Emoji für das Land ermitteln
         const flag = getFlagEmoji(data.name);
 
-        // Styling als abgerundeter Block / Karte
         card.className = "relative group bg-slate-800 border border-slate-700/80 hover:border-indigo-500/50 p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center cursor-pointer transition transform active:scale-95 min-h-[130px]";
         card.onclick = () => openCountryModal(data.id, data.name);
         
         card.innerHTML = `
-          <!-- Mülleimer-Button oben rechts am Block -->
           <button onclick="deleteCountry('${data.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100">
             🗑️
           </button>
           
-          <!-- Flagge im Kreis -->
           <div class="w-12 h-12 rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center text-2xl mb-3 shadow-inner">
             ${flag}
           </div>
           
-          <!-- Land Name -->
           <span class="font-semibold text-sm text-slate-100 line-clamp-1">${data.name}</span>
           <span class="text-[10px] text-indigo-400 mt-1 font-medium">Tippen zum Öffnen</span>
         `;
@@ -226,7 +237,7 @@ async function deleteCoin(coinId) {
   }
 }
 
-// Münzen laden
+// Münzen laden (JETZT MIT AUTOMATISCHER WERT-SORTIERUNG)
 function loadCoins(countryId) {
   const coinList = document.getElementById('coin-list');
 
@@ -239,8 +250,18 @@ function loadCoins(countryId) {
         return;
       }
 
+      let coins = [];
       snapshot.forEach(doc => {
-        const coin = doc.data();
+        coins.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+
+      // Nach rechnerischem Münzwert sortieren (aufsteigend: 1ct -> 2ct -> ... -> 2€)
+      coins.sort((a, b) => parseCoinValueToCent(a.value) - parseCoinValueToCent(b.value));
+
+      coins.forEach(coin => {
         const item = document.createElement('div');
         item.className = `p-3 rounded-xl border flex items-center justify-between ${coin.owned ? 'bg-emerald-950/40 border-emerald-700/50 text-emerald-200' : 'bg-slate-900 border-slate-700 text-slate-300'}`;
         
@@ -253,7 +274,7 @@ function loadCoins(countryId) {
               </div>
             </div>
           </div>
-          <button onclick="deleteCoin('${doc.id}')" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-950/50 hover:bg-rose-900/60 p-2 rounded-lg font-bold transition">
+          <button onclick="deleteCoin('${coin.id}')" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-950/50 hover:bg-rose-900/60 p-2 rounded-lg font-bold transition">
             🗑️
           </button>
         `;
@@ -264,4 +285,3 @@ function loadCoins(countryId) {
 
 // Initialer Start der Anwendung
 loadCountries();
-
