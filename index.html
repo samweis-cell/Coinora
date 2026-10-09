@@ -43,7 +43,7 @@
 
         <!-- Versionsanzeige -->
         <span id="app-version" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1.5 rounded-xl font-mono font-bold">
-          v1.1.4
+          v1.1.5
         </span>
       </div>
     </div>
@@ -145,18 +145,16 @@
     </div>
   </div>
 
-  <!-- Verbessertes Lightbox Modal (Großansicht) -->
-  <div id="lightbox-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex flex-col items-center justify-center p-4 z-[60]" onclick="closeLightbox()">
-    <div class="relative max-w-xl w-full flex flex-col items-center justify-center p-2" onclick="event.stopPropagation()">
-      <button onclick="closeLightbox()" class="absolute top-0 right-2 text-white/80 hover:text-white text-2xl font-bold bg-slate-800/80 w-10 h-10 rounded-full border border-slate-700 shadow flex items-center justify-center z-10">✕</button>
-      <div class="w-full max-h-[75vh] flex items-center justify-center overflow-hidden rounded-2xl bg-slate-950 border border-slate-700 shadow-2xl p-2 mb-3">
-        <img id="lightbox-image" src="" class="max-h-[70vh] w-auto max-w-full object-contain rounded-xl">
-      </div>
-      <p id="lightbox-caption" class="text-slate-100 font-semibold text-center text-base bg-slate-800/90 px-5 py-2.5 rounded-xl border border-slate-700 shadow max-w-full truncate"></p>
+  <!-- Echtes rahmenloses Vollbild Lightbox Modal -->
+  <div id="lightbox-modal" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden flex flex-col items-center justify-center p-4 z-[60]" onclick="closeLightbox()">
+    <button onclick="closeLightbox()" class="absolute top-5 right-5 text-white/90 hover:text-white text-2xl font-bold bg-slate-800/90 w-12 h-12 rounded-full border border-slate-700 shadow-xl flex items-center justify-center z-10">✕</button>
+    
+    <div class="flex flex-col items-center justify-center max-w-4xl w-full max-h-[88vh]" onclick="event.stopPropagation()">
+      <img id="lightbox-image" src="" class="max-h-[75vh] w-auto max-w-full object-contain rounded-2xl shadow-2xl mb-4">
+      <p id="lightbox-caption" class="text-slate-100 font-semibold text-center text-sm md:text-base bg-slate-800/90 px-5 py-2.5 rounded-xl border border-slate-700 shadow-lg max-w-lg"></p>
     </div>
   </div>
 
-  <script src="app.js?v=1.1.4"></script>
+  <script src="app.js?v=1.1.5"></script>
 </body>
 </html>
-
