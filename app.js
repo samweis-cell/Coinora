@@ -1,11 +1,64 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.0.8";
+const APP_VERSION = "1.0.9";
 
 // Version auf der Webseite anzeigen
 document.addEventListener("DOMContentLoaded", () => {
   const versionElem = document.getElementById("app-version");
   if (versionElem) versionElem.innerText = `v${APP_VERSION}`;
 });
+
+let selectedImageBase64 = "";
+
+// Bild aus Galerie auswählen und für Speicherung komprimieren
+function handleImageSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Bild für Speicherung verkleinern (max 400px), damit Firestore nicht überlastet wird
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 400;
+      const MAX_HEIGHT = 400;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+      // Vorschau anzeigen
+      document.getElementById('image-preview').src = selectedImageBase64;
+      document.getElementById('image-preview-container').classList.remove('hidden');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Ausgewähltes Bild entfernen
+function removeSelectedImage() {
+  selectedImageBase64 = "";
+  document.getElementById('coin-image-file').value = "";
+  document.getElementById('image-preview-container').classList.add('hidden');
+}
 
 // Schnellauswahl für Münzwerte
 function setCoinValue(val) {
@@ -177,7 +230,6 @@ function loadCountries() {
         card.className = "relative group bg-slate-800 border border-slate-700/80 hover:border-indigo-500/50 p-4 rounded-2xl shadow-lg flex flex-col items-center justify-between text-center cursor-pointer transition transform active:scale-95 min-h-[145px]";
         card.onclick = () => openCountryModal(data.id, data.name);
         
-        // Platzhalter für Kachel-Inhalt (Fortschritt wird in Realtime geladen)
         card.innerHTML = `
           <button onclick="deleteCountry('${data.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100 z-10">
             🗑️
@@ -189,7 +241,6 @@ function loadCountries() {
           
           <span class="font-semibold text-sm text-slate-100 line-clamp-1 mb-2">${data.name}</span>
           
-          <!-- Fortschrittsbalken-Container -->
           <div class="w-full space-y-1">
             <div class="flex justify-between items-center text-[10px] font-medium text-slate-400">
               <span id="progress-text-${data.id}">0/0 Münzen</span>
@@ -202,7 +253,6 @@ function loadCountries() {
         `;
         list.appendChild(card);
 
-        // Echtzeit-Berechnung des Fortschritts für dieses Land
         db.collection('countries').doc(data.id).collection('coins').onSnapshot(coinsSnapshot => {
           const totalCoins = coinsSnapshot.size;
           let ownedCoins = 0;
@@ -247,14 +297,18 @@ function openCountryModal(countryId, countryName) {
 function closeModal() {
   document.getElementById('coin-modal').classList.add('hidden');
   currentCountryId = null;
+  removeSelectedImage();
 }
 
-// Neue Münze speichern
+// Neue Münze speichern (inkl. Bild)
 async function saveCoin() {
   const valueInput = document.getElementById('coin-value');
   const titleInput = document.getElementById('coin-title');
+  const urlInput = document.getElementById('coin-image-url');
+
   const value = valueInput.value.trim();
   const title = titleInput.value.trim();
+  const imageUrl = selectedImageBase64 || urlInput.value.trim();
   const owned = document.getElementById('coin-owned').checked;
 
   if (!value) return;
@@ -263,12 +317,15 @@ async function saveCoin() {
     await db.collection('countries').doc(currentCountryId).collection('coins').add({
       value: value,
       title: title || '',
+      imageUrl: imageUrl || '',
       owned: owned,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     valueInput.value = '';
     titleInput.value = '';
+    urlInput.value = '';
+    removeSelectedImage();
     document.getElementById('coin-owned').checked = false;
   } catch (error) {
     alert("Fehler beim Speichern der Münze: " + error.message);
@@ -297,7 +354,7 @@ async function deleteCoin(coinId, event) {
   }
 }
 
-// Münzen als Kachel-Grid laden
+// Münzen als Kachel-Grid laden (MIT FOTO-ANZEIGE)
 function loadCoins(countryId) {
   const coinList = document.getElementById('coin-list');
 
@@ -337,15 +394,22 @@ function loadCoins(countryId) {
           ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
           : 'bg-slate-800 text-slate-400 border-slate-700';
 
-        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[110px]`;
+        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[140px]`;
         card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
 
         card.innerHTML = `
-          <button onclick="deleteCoin('${coin.id}', event)" class="absolute top-2 right-2 text-xs text-rose-400 hover:text-rose-300 bg-slate-800/80 hover:bg-rose-950/60 p-1 rounded-lg transition opacity-70 group-hover:opacity-100">
+          <button onclick="deleteCoin('${coin.id}', event)" class="absolute top-2 right-2 text-xs text-rose-400 hover:text-rose-300 bg-slate-800/80 hover:bg-rose-950/60 p-1 rounded-lg transition opacity-70 group-hover:opacity-100 z-10">
             🗑️
           </button>
 
-          <div class="pr-5 space-y-1">
+          <!-- Foto-Anzeige falls vorhanden -->
+          ${coin.imageUrl ? `
+            <div class="w-full h-24 mb-2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+              <img src="${coin.imageUrl}" class="w-full h-full object-cover" alt="${coin.value}">
+            </div>
+          ` : ''}
+
+          <div class="pr-5 space-y-0.5">
             <span class="font-bold text-base text-white block leading-tight">${coin.value}</span>
             ${coin.title ? `<span class="text-xs text-slate-300 block line-clamp-2 leading-snug">${coin.title}</span>` : ''}
           </div>
@@ -364,6 +428,7 @@ function loadCoins(countryId) {
 
 // Initialer Start der Anwendung
 loadCountries();
+
 
 
 
