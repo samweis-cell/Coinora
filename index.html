@@ -12,72 +12,73 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen p-4 md:p-8 font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans">
 
   <div class="max-w-2xl mx-auto space-y-6">
     
     <!-- Kopfzeile mit App-Name und Versionsnummer -->
-    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow">
+    <div class="flex justify-between items-center bg-slate-800 p-4 rounded-2xl border border-slate-700/50 shadow-lg">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Coinora</h1>
-        <p class="text-xs text-slate-500">Münzsammlung Synchronisieren</p>
+        <h1 class="text-2xl font-bold text-white tracking-wide">Coinora</h1>
+        <p class="text-xs text-slate-400">Münzsammlung</p>
       </div>
       <!-- Versionsanzeige -->
-      <span id="app-version" class="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md font-mono font-bold">
-        v1.0.1
+      <span id="app-version" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-md font-mono font-bold">
+        v1.0.2
       </span>
     </div>
 
     <!-- Kategorie-Aktivierung (Kursmünzen vs. Gedenkmünzen) -->
     <div class="grid grid-cols-2 gap-4">
-      <button id="btn-laender" onclick="selectCategory('laender')" class="p-4 bg-white rounded-xl shadow border-2 border-indigo-500 font-medium text-left transition">
+      <button id="btn-laender" onclick="selectCategory('laender')" class="p-4 bg-slate-800 rounded-2xl border-2 border-indigo-500 font-medium text-left transition shadow-md">
         🌍 Kursmünzen
       </button>
-      <button id="btn-gedenk" onclick="selectCategory('gedenk')" class="p-4 bg-white rounded-xl shadow border-2 border-transparent font-medium text-left transition">
+      <button id="btn-gedenk" onclick="selectCategory('gedenk')" class="p-4 bg-slate-800 rounded-2xl border-2 border-transparent font-medium text-left transition shadow-md text-slate-400">
         ⭐ 2€ Gedenkmünzen
       </button>
     </div>
 
     <!-- Neues Land / Neue Kategorie hinzufügen -->
-    <div class="bg-white p-4 rounded-xl shadow space-y-3">
-      <h2 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Eintrag hinzufügen</h2>
+    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50 shadow-lg space-y-3">
+      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Eintrag hinzufügen</h2>
       <div class="flex gap-2">
-        <input type="text" id="new-country-name" placeholder="z. B. Deutschland, Frankreich..." class="flex-1 p-3 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <button onclick="addCountry()" class="bg-indigo-600 text-white px-5 py-3 rounded-lg font-medium hover:bg-indigo-700 transition">
+        <input type="text" id="new-country-name" placeholder="z. B. Deutschland..." class="flex-1 p-3 border border-slate-600 rounded-xl bg-slate-900 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <button onclick="addCountry()" class="bg-indigo-600 text-white px-5 py-3 rounded-xl font-medium hover:bg-indigo-500 transition shadow-md">
           Hinzufügen
         </button>
       </div>
     </div>
 
-    <!-- Liste der erfassten Länder -->
+    <!-- Raster / Grid der erfassten Länder -->
     <div class="space-y-3">
-      <h2 class="text-sm font-semibold text-slate-600 uppercase tracking-wider">Übersicht</h2>
-      <div id="country-list" class="space-y-2">
-        <p class="text-sm text-slate-400 italic">Lade Einträge...</p>
+      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Übersicht</h2>
+      <!-- Hier entsteht das Block-Grid (2 Spalten auf Handys, 3 auf größeren Bildschirmen) -->
+      <div id="country-list" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <p class="text-sm text-slate-500 italic col-span-2 sm:col-span-3">Lade Einträge...</p>
       </div>
     </div>
 
   </div>
 
   <!-- Detail-Modal für Münzen eines Landes -->
-  <div id="coin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-lg w-full space-y-4 max-h-[90vh] flex flex-col shadow-2xl">
+  <div id="coin-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-lg w-full space-y-4 max-h-[90vh] flex flex-col shadow-2xl text-white">
       
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 id="modal-title" class="font-bold text-lg text-slate-800">Münzen verwalten</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 id="modal-title" class="font-bold text-lg text-white">Münzen verwalten</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
       </div>
 
       <!-- Eingabe für neue Münzen -->
-      <div class="bg-slate-50 p-3 rounded-xl border space-y-3">
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-700 space-y-3">
         <div class="flex gap-2">
-          <input type="text" id="coin-value" placeholder="Münzwert (z. B. 2 Euro, 10 Cent)" class="flex-1 p-2 border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <label class="flex items-center gap-2 text-sm font-medium px-2 cursor-pointer">
+          <input type="text" id="coin-value" placeholder="Münzwert (z. B. 2 Euro, 10 Cent)" class="flex-1 p-2 border border-slate-700 rounded-xl bg-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <label class="flex items-center gap-2 text-sm font-medium px-2 cursor-pointer text-slate-300">
             <input type="checkbox" id="coin-owned" class="w-4 h-4 text-indigo-600 rounded">
             Vorhanden
           </label>
         </div>
-        <button onclick="saveCoin()" class="w-full bg-slate-800 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-900 transition">
+        <button onclick="saveCoin()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-indigo-500 transition">
           Münze speichern
         </button>
       </div>
@@ -87,7 +88,7 @@
         <!-- Dynamische Befüllung durch JavaScript -->
       </div>
 
-      <button onclick="closeModal()" class="w-full py-2 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition text-sm">
+      <button onclick="closeModal()" class="w-full py-2.5 bg-slate-700 text-slate-200 font-medium rounded-xl hover:bg-slate-600 transition text-sm">
         Schließen
       </button>
     </div>
@@ -97,5 +98,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
-

@@ -1,5 +1,5 @@
-// VERSIONSNUMMER (Bei jedem Update anpassen, um den Cache auf Geräten zu überprüfen)
-const APP_VERSION = "1.0.1";
+// VERSIONSNUMMER
+const APP_VERSION = "1.0.2";
 
 // Version auf der Webseite anzeigen
 document.addEventListener("DOMContentLoaded", () => {
@@ -33,11 +33,21 @@ db.enablePersistence({ synchronizeTabs: true })
 let currentCategory = 'laender';
 let currentCountryId = null;
 
-// Kategorie wechseln (Kursmünzen / Gedenkmünzen)
+// Kategorie wechseln
 function selectCategory(cat) {
   currentCategory = cat;
-  document.getElementById('btn-laender').className = `p-4 bg-white rounded-xl shadow border-2 font-medium text-left transition ${cat === 'laender' ? 'border-indigo-500' : 'border-transparent'}`;
-  document.getElementById('btn-gedenk').className = `p-4 bg-white rounded-xl shadow border-2 font-medium text-left transition ${cat === 'gedenk' ? 'border-indigo-500' : 'border-transparent'}`;
+  
+  const btnLaender = document.getElementById('btn-laender');
+  const btnGedenk = document.getElementById('btn-gedenk');
+
+  if (cat === 'laender') {
+    btnLaender.className = 'p-4 bg-slate-800 rounded-2xl border-2 border-indigo-500 font-medium text-left transition shadow-md text-white';
+    btnGedenk.className = 'p-4 bg-slate-800 rounded-2xl border-2 border-transparent font-medium text-left transition shadow-md text-slate-400';
+  } else {
+    btnGedenk.className = 'p-4 bg-slate-800 rounded-2xl border-2 border-indigo-500 font-medium text-left transition shadow-md text-white';
+    btnLaender.className = 'p-4 bg-slate-800 rounded-2xl border-2 border-transparent font-medium text-left transition shadow-md text-slate-400';
+  }
+  
   loadCountries();
 }
 
@@ -61,7 +71,6 @@ async function addCountry() {
 
 // Land löschen
 async function deleteCountry(countryId, countryName, event) {
-  // Verhindert, dass beim Klick auf Löschen direkt das Modal geöffnet wird
   event.stopPropagation();
 
   if (confirm(`Möchtest du "${countryName}" wirklich komplett löschen?`)) {
@@ -73,7 +82,7 @@ async function deleteCountry(countryId, countryName, event) {
   }
 }
 
-// Länder laden (Echtzeit & Lokal)
+// Länder als Blöcke/Kacheln laden
 function loadCountries() {
   const list = document.getElementById('country-list');
   
@@ -82,24 +91,32 @@ function loadCountries() {
     .onSnapshot({ includeMetadataChanges: true }, snapshot => {
       list.innerHTML = '';
       if (snapshot.empty) {
-        list.innerHTML = `<p class="text-sm text-slate-400 italic">Noch keine Einträge vorhanden.</p>`;
+        list.innerHTML = `<p class="text-sm text-slate-500 italic col-span-2 sm:col-span-3 text-center py-6">Noch keine Einträge vorhanden.</p>`;
         return;
       }
 
       snapshot.forEach(doc => {
         const data = doc.data();
         const card = document.createElement('div');
-        card.className = "bg-white p-4 rounded-xl shadow flex justify-between items-center cursor-pointer hover:bg-slate-50 transition";
+        
+        // Styling als abgerundeter Block / Karte
+        card.className = "relative group bg-slate-800 border border-slate-700 hover:border-indigo-500/50 p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center cursor-pointer transition transform active:scale-95 min-h-[130px]";
         card.onclick = () => openCountryModal(doc.id, data.name);
         
         card.innerHTML = `
-          <span class="font-medium">${data.name}</span>
-          <div class="flex items-center gap-3">
-            <span class="text-xs text-indigo-600 font-bold">Öffnen →</span>
-            <button onclick="deleteCountry('${doc.id}', '${data.name}', event)" class="text-xs text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg font-bold transition">
-              🗑️
-            </button>
+          <!-- Mülleimer-Button oben rechts am Block -->
+          <button onclick="deleteCountry('${doc.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100">
+            🗑️
+          </button>
+          
+          <!-- Symbol / Icon im Kreis (wie in der Beispiel-App) -->
+          <div class="w-12 h-12 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-xl mb-3 shadow-inner">
+            ${currentCategory === 'laender' ? '🪙' : '⭐'}
           </div>
+          
+          <!-- Land Name -->
+          <span class="font-semibold text-sm text-slate-100 line-clamp-1">${data.name}</span>
+          <span class="text-[10px] text-indigo-400 mt-1 font-medium">Tippen zum Öffnen</span>
         `;
         list.appendChild(card);
       });
@@ -160,25 +177,25 @@ function loadCoins(countryId) {
       coinList.innerHTML = '';
       
       if (snapshot.empty) {
-        coinList.innerHTML = `<p class="text-xs text-slate-400 italic p-2">Noch keine Münzen eingetragen.</p>`;
+        coinList.innerHTML = `<p class="text-xs text-slate-500 italic p-2 text-center">Noch keine Münzen eingetragen.</p>`;
         return;
       }
 
       snapshot.forEach(doc => {
         const coin = doc.data();
         const item = document.createElement('div');
-        item.className = `p-3 rounded-lg border flex items-center justify-between ${coin.owned ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`;
+        item.className = `p-3 rounded-xl border flex items-center justify-between ${coin.owned ? 'bg-emerald-950/40 border-emerald-700/50 text-emerald-200' : 'bg-slate-900 border-slate-700 text-slate-300'}`;
         
         item.innerHTML = `
           <div class="flex items-center gap-3">
             <div>
-              <div class="font-bold text-sm">${coin.value}</div>
-              <div class="text-xs ${coin.owned ? 'text-emerald-700 font-semibold' : 'text-slate-400'}">
+              <div class="font-bold text-sm text-white">${coin.value}</div>
+              <div class="text-xs ${coin.owned ? 'text-emerald-400 font-semibold' : 'text-slate-500'}">
                 ${coin.owned ? '✓ Vorhanden' : '✗ Fehlt'}
               </div>
             </div>
           </div>
-          <button onclick="deleteCoin('${doc.id}')" class="text-xs text-rose-500 hover:text-rose-700 bg-rose-100 p-2 rounded-lg font-bold transition">
+          <button onclick="deleteCoin('${doc.id}')" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-950/50 hover:bg-rose-900/60 p-2 rounded-lg font-bold transition">
             🗑️
           </button>
         `;
