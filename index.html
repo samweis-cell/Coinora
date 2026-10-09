@@ -43,7 +43,7 @@
 
         <!-- Versionsanzeige -->
         <span id="app-version" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1.5 rounded-xl font-mono font-bold">
-          v1.1.3
+          v1.1.4
         </span>
       </div>
     </div>
@@ -88,7 +88,7 @@
         <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
       </div>
 
-      <!-- Compact Eingabebereich für neue Münzen -->
+      <!-- Eingabebereich für neue Münzen -->
       <div id="add-coin-box" class="bg-slate-900 p-3.5 rounded-2xl border border-slate-700 space-y-2.5 flex-shrink-0">
         
         <div>
@@ -135,7 +135,7 @@
         </div>
       </div>
 
-      <!-- Münz-Grid (scrollbar mit festen Kartenhöhen) -->
+      <!-- Münz-Grid -->
       <div id="coin-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto flex-1 pr-1 py-1">
       </div>
 
@@ -145,15 +145,18 @@
     </div>
   </div>
 
-  <!-- Lightbox Modal -->
+  <!-- Verbessertes Lightbox Modal (Großansicht) -->
   <div id="lightbox-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex flex-col items-center justify-center p-4 z-[60]" onclick="closeLightbox()">
-    <div class="relative max-w-lg w-full flex flex-col items-center" onclick="event.stopPropagation()">
-      <button onclick="closeLightbox()" class="absolute -top-10 right-0 text-white/80 hover:text-white text-2xl font-bold bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700 shadow">✕</button>
-      <img id="lightbox-image" src="" class="max-h-[75vh] w-auto max-w-full rounded-2xl border border-slate-700 shadow-2xl object-contain">
-      <p id="lightbox-caption" class="text-slate-200 font-medium text-center mt-4 text-sm bg-slate-800/90 px-4 py-2 rounded-xl border border-slate-700 shadow"></p>
+    <div class="relative max-w-xl w-full flex flex-col items-center justify-center p-2" onclick="event.stopPropagation()">
+      <button onclick="closeLightbox()" class="absolute top-0 right-2 text-white/80 hover:text-white text-2xl font-bold bg-slate-800/80 w-10 h-10 rounded-full border border-slate-700 shadow flex items-center justify-center z-10">✕</button>
+      <div class="w-full max-h-[75vh] flex items-center justify-center overflow-hidden rounded-2xl bg-slate-950 border border-slate-700 shadow-2xl p-2 mb-3">
+        <img id="lightbox-image" src="" class="max-h-[70vh] w-auto max-w-full object-contain rounded-xl">
+      </div>
+      <p id="lightbox-caption" class="text-slate-100 font-semibold text-center text-base bg-slate-800/90 px-5 py-2.5 rounded-xl border border-slate-700 shadow max-w-full truncate"></p>
     </div>
   </div>
 
-  <script src="app.js?v=1.1.3"></script>
+  <script src="app.js?v=1.1.4"></script>
 </body>
 </html>
+

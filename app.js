@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.3";
+const APP_VERSION = "1.1.4";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 
@@ -444,7 +444,6 @@ function loadCoins(countryId) {
           </button>
         ` : '';
 
-        // h-24 flex-shrink-0 stellt sicher, dass das Bild seine Höhe nicht verliert
         const imageHtml = coin.imageUrl ? `
           <div onclick="openLightbox('${coin.imageUrl}', '${coin.value}${coin.title ? ' - ' + coin.title : ''}', event)" class="w-full h-24 flex-shrink-0 mb-2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center group/img relative cursor-zoom-in">
             <img src="${coin.imageUrl}" class="w-full h-full object-cover transition transform group-hover/img:scale-105" alt="${coin.value}">
