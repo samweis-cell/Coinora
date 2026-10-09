@@ -1,7 +1,6 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.2";
+const APP_VERSION = "1.1.3";
 
-// Status aus localStorage abrufen
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -10,9 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
   updateUiForMode();
 });
 
-// Vollbild-Vorschau (Lightbox) öffnen
 function openLightbox(imageUrl, title, event) {
-  event.stopPropagation(); // Verhindert, dass sich der Vorhanden-Status beim Bildklick ändert
+  event.stopPropagation();
   const modal = document.getElementById("lightbox-modal");
   const img = document.getElementById("lightbox-image");
   const caption = document.getElementById("lightbox-caption");
@@ -24,7 +22,6 @@ function openLightbox(imageUrl, title, event) {
   }
 }
 
-// Vollbild-Vorschau schließen
 function closeLightbox() {
   const modal = document.getElementById("lightbox-modal");
   if (modal) modal.classList.add("hidden");
@@ -438,7 +435,7 @@ function loadCoins(countryId) {
           ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
           : 'bg-slate-800 text-slate-400 border-slate-700';
 
-        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[140px]`;
+        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[175px]`;
         card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
 
         const deleteBtnHtml = isEditMode ? `
@@ -447,9 +444,9 @@ function loadCoins(countryId) {
           </button>
         ` : '';
 
-        // Klick auf das Bild öffnet jetzt die Großansicht
+        // h-24 flex-shrink-0 stellt sicher, dass das Bild seine Höhe nicht verliert
         const imageHtml = coin.imageUrl ? `
-          <div onclick="openLightbox('${coin.imageUrl}', '${coin.value}${coin.title ? ' - ' + coin.title : ''}', event)" class="w-full h-24 mb-2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center group/img relative cursor-zoom-in">
+          <div onclick="openLightbox('${coin.imageUrl}', '${coin.value}${coin.title ? ' - ' + coin.title : ''}', event)" class="w-full h-24 flex-shrink-0 mb-2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center group/img relative cursor-zoom-in">
             <img src="${coin.imageUrl}" class="w-full h-full object-cover transition transform group-hover/img:scale-105" alt="${coin.value}">
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-xs text-white font-medium">🔍 Vergrößern</div>
           </div>
@@ -459,12 +456,12 @@ function loadCoins(countryId) {
           ${deleteBtnHtml}
           ${imageHtml}
 
-          <div class="pr-5 space-y-0.5">
+          <div class="pr-5 space-y-0.5 flex-1 flex flex-col justify-center">
             <span class="font-bold text-base text-white block leading-tight">${coin.value}</span>
             ${coin.title ? `<span class="text-xs text-slate-300 block line-clamp-2 leading-snug">${coin.title}</span>` : ''}
           </div>
 
-          <div class="mt-3 flex items-center justify-between">
+          <div class="mt-2 flex items-center justify-between flex-shrink-0">
             <span class="text-[10px] px-2 py-0.5 rounded-md border font-semibold ${badgeClass}">
               ${isOwned ? '✓ Vorhanden' : 'Fehlt'}
             </span>
