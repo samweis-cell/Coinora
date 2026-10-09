@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.0.4";
+const APP_VERSION = "1.0.5";
 
 // Version auf der Webseite anzeigen
 document.addEventListener("DOMContentLoaded", () => {
@@ -124,7 +124,7 @@ async function deleteCountry(countryId, countryName, event) {
   }
 }
 
-// Länder als Blöcke/Kacheln laden
+// Länder als Blöcke/Kacheln laden (MIT ALPHABETISCHER SORTIERUNG)
 function loadCountries() {
   const list = document.getElementById('country-list');
   
@@ -137,20 +137,32 @@ function loadCountries() {
         return;
       }
 
+      // Dokumente aus Firestore auslesen
+      let countries = [];
       snapshot.forEach(doc => {
-        const data = doc.data();
+        countries.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+
+      // Alphabetisch nach Ländernamen sortieren (A-Z)
+      countries.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+
+      // Sortierte Kacheln anzeigen
+      countries.forEach(data => {
         const card = document.createElement('div');
         
-        // Flaggen-Emoji für das Land ermitteln (jetzt mit Teiltext-Suche)
+        // Flaggen-Emoji für das Land ermitteln
         const flag = getFlagEmoji(data.name);
 
         // Styling als abgerundeter Block / Karte
         card.className = "relative group bg-slate-800 border border-slate-700/80 hover:border-indigo-500/50 p-5 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center cursor-pointer transition transform active:scale-95 min-h-[130px]";
-        card.onclick = () => openCountryModal(doc.id, data.name);
+        card.onclick = () => openCountryModal(data.id, data.name);
         
         card.innerHTML = `
           <!-- Mülleimer-Button oben rechts am Block -->
-          <button onclick="deleteCountry('${doc.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100">
+          <button onclick="deleteCountry('${data.id}', '${data.name}', event)" class="absolute top-2.5 right-2.5 text-xs text-rose-400 hover:text-rose-300 bg-slate-900/60 hover:bg-rose-900/40 p-1.5 rounded-lg transition opacity-80 group-hover:opacity-100">
             🗑️
           </button>
           
@@ -252,3 +264,4 @@ function loadCoins(countryId) {
 
 // Initialer Start der Anwendung
 loadCountries();
+
