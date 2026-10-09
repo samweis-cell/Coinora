@@ -1,7 +1,7 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.1";
+const APP_VERSION = "1.1.2";
 
-// Status aus localStorage abrufen (Standard ist 'true', falls noch nie gesetzt)
+// Status aus localStorage abrufen
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -10,7 +10,26 @@ document.addEventListener("DOMContentLoaded", () => {
   updateUiForMode();
 });
 
-// Umschalten zwischen Bearbeiten und Beobachten & im LocalStorage speichern
+// Vollbild-Vorschau (Lightbox) öffnen
+function openLightbox(imageUrl, title, event) {
+  event.stopPropagation(); // Verhindert, dass sich der Vorhanden-Status beim Bildklick ändert
+  const modal = document.getElementById("lightbox-modal");
+  const img = document.getElementById("lightbox-image");
+  const caption = document.getElementById("lightbox-caption");
+
+  if (modal && img && caption) {
+    img.src = imageUrl;
+    caption.innerText = title || "Münzmotiv";
+    modal.classList.remove("hidden");
+  }
+}
+
+// Vollbild-Vorschau schließen
+function closeLightbox() {
+  const modal = document.getElementById("lightbox-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
 function toggleEditMode() {
   isEditMode = !isEditMode;
   localStorage.setItem("coinora_edit_mode", isEditMode);
@@ -21,7 +40,6 @@ function toggleEditMode() {
   }
 }
 
-// UI entsprechend des Modus anpassen
 function updateUiForMode() {
   const btn = document.getElementById("toggle-edit-btn");
   const modeIcon = document.getElementById("mode-icon");
@@ -429,14 +447,17 @@ function loadCoins(countryId) {
           </button>
         ` : '';
 
+        // Klick auf das Bild öffnet jetzt die Großansicht
+        const imageHtml = coin.imageUrl ? `
+          <div onclick="openLightbox('${coin.imageUrl}', '${coin.value}${coin.title ? ' - ' + coin.title : ''}', event)" class="w-full h-24 mb-2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center group/img relative cursor-zoom-in">
+            <img src="${coin.imageUrl}" class="w-full h-full object-cover transition transform group-hover/img:scale-105" alt="${coin.value}">
+            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-xs text-white font-medium">🔍 Vergrößern</div>
+          </div>
+        ` : '';
+
         card.innerHTML = `
           ${deleteBtnHtml}
-
-          ${coin.imageUrl ? `
-            <div class="w-full h-24 mb-2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
-              <img src="${coin.imageUrl}" class="w-full h-full object-cover" alt="${coin.value}">
-            </div>
-          ` : ''}
+          ${imageHtml}
 
           <div class="pr-5 space-y-0.5">
             <span class="font-bold text-base text-white block leading-tight">${coin.value}</span>
@@ -456,4 +477,3 @@ function loadCoins(countryId) {
 }
 
 loadCountries();
-
