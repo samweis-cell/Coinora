@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.7";
+const APP_VERSION = "1.1.8";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 
@@ -70,7 +70,6 @@ function handleImageSelect(event) {
     const img = new Image();
     img.onload = function() {
       const canvas = document.createElement('canvas');
-      // Erhöht auf 1200px, damit das Bild in der Lightbox gestochen scharf und groß bleibt
       const MAX_WIDTH = 1200;
       const MAX_HEIGHT = 1200;
       let width = img.width;
@@ -436,7 +435,8 @@ function loadCoins(countryId) {
           ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
           : 'bg-slate-800 text-slate-400 border-slate-700';
 
-        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[175px]`;
+        // min-h auf 195px erhöht, damit längere Titel perfekt reinpassen und das Badge nicht herausragt
+        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[195px]`;
         card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
 
         const deleteBtnHtml = isEditMode ? `
