@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.5";
+const APP_VERSION = "1.1.6";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 
