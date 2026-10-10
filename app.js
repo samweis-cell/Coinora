@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.8";
+const APP_VERSION = "1.1.9";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 
@@ -435,8 +435,8 @@ function loadCoins(countryId) {
           ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
           : 'bg-slate-800 text-slate-400 border-slate-700';
 
-        // min-h auf 195px erhöht, damit längere Titel perfekt reinpassen und das Badge nicht herausragt
-        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col justify-between transition cursor-pointer shadow min-h-[195px]`;
+        // Entfernt die feste Mindesthöhe und erlaubt automatisches Mitwachsen per Flexbox
+        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col gap-2 transition cursor-pointer shadow`;
         card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
 
         const deleteBtnHtml = isEditMode ? `
@@ -446,7 +446,7 @@ function loadCoins(countryId) {
         ` : '';
 
         const imageHtml = coin.imageUrl ? `
-          <div onclick="openLightbox('${coin.imageUrl}', '${coin.value}${coin.title ? ' - ' + coin.title : ''}', event)" class="w-full h-24 flex-shrink-0 mb-2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center group/img relative cursor-zoom-in">
+          <div onclick="openLightbox('${coin.imageUrl}', '${coin.value}${coin.title ? ' - ' + coin.title : ''}', event)" class="w-full h-24 flex-shrink-0 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center group/img relative cursor-zoom-in">
             <img src="${coin.imageUrl}" class="w-full h-full object-cover transition transform group-hover/img:scale-105" alt="${coin.value}">
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-xs text-white font-medium">🔍 Vergrößern</div>
           </div>
@@ -456,12 +456,13 @@ function loadCoins(countryId) {
           ${deleteBtnHtml}
           ${imageHtml}
 
-          <div class="pr-5 space-y-0.5 flex-1 flex flex-col justify-center">
+          <div class="pr-5 space-y-0.5">
             <span class="font-bold text-base text-white block leading-tight">${coin.value}</span>
-            ${coin.title ? `<span class="text-xs text-slate-300 block line-clamp-2 leading-snug">${coin.title}</span>` : ''}
+            ${coin.title ? `<span class="text-xs text-slate-300 block leading-snug mt-0.5">${coin.title}</span>` : ''}
           </div>
 
-          <div class="mt-2 flex items-center justify-between flex-shrink-0">
+          <!-- mt-auto drückt das Badge immer sauber nach unten, ohne über den Rand zu ragen -->
+          <div class="mt-auto pt-1 flex items-center justify-between">
             <span class="text-[10px] px-2 py-0.5 rounded-md border font-semibold ${badgeClass}">
               ${isOwned ? '✓ Vorhanden' : 'Fehlt'}
             </span>
