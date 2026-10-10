@@ -43,7 +43,7 @@
 
         <!-- Versionsanzeige -->
         <span id="app-version" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1.5 rounded-xl font-mono font-bold">
-          v1.1.6
+          v1.1.7
         </span>
       </div>
     </div>
@@ -145,17 +145,16 @@
     </div>
   </div>
 
-  <!-- Korrigiertes, echtes großes Lightbox Modal -->
+  <!-- Stark vergrößertes Lightbox Modal -->
   <div id="lightbox-modal" class="fixed inset-0 bg-black/95 backdrop-blur-md hidden flex flex-col items-center justify-center p-4 z-[60]" onclick="closeLightbox()">
     <button onclick="closeLightbox()" class="absolute top-5 right-5 text-white/90 hover:text-white text-2xl font-bold bg-slate-800/90 w-12 h-12 rounded-full border border-slate-700 shadow-xl flex items-center justify-center z-10">✕</button>
     
-    <div class="flex flex-col items-center justify-center max-w-5xl w-full h-full max-h-[90vh] pointer-events-none" onclick="event.stopPropagation()">
-      <img id="lightbox-image" src="" class="max-h-[72vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl mb-4 pointer-events-auto">
+    <div class="flex flex-col items-center justify-center w-full h-full max-h-[92vh] pointer-events-none" onclick="event.stopPropagation()">
+      <img id="lightbox-image" src="" class="max-h-[82vh] max-w-[92vw] object-contain rounded-2xl shadow-2xl mb-4 pointer-events-auto">
       <p id="lightbox-caption" class="text-slate-100 font-semibold text-center text-base md:text-lg bg-slate-800/90 px-6 py-3 rounded-2xl border border-slate-700 shadow-xl max-w-xl pointer-events-auto"></p>
     </div>
   </div>
 
-  <script src="app.js?v=1.1.6"></script>
+  <script src="app.js?v=1.1.7"></script>
 </body>
 </html>
-

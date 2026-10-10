@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.6";
+const APP_VERSION = "1.1.7";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 
@@ -70,8 +70,9 @@ function handleImageSelect(event) {
     const img = new Image();
     img.onload = function() {
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 400;
-      const MAX_HEIGHT = 400;
+      // Erhöht auf 1200px, damit das Bild in der Lightbox gestochen scharf und groß bleibt
+      const MAX_WIDTH = 1200;
+      const MAX_HEIGHT = 1200;
       let width = img.width;
       let height = img.height;
 
@@ -92,7 +93,7 @@ function handleImageSelect(event) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
 
       document.getElementById('image-preview').src = selectedImageBase64;
       document.getElementById('image-preview-container').classList.remove('hidden');
