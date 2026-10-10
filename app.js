@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.11";
+const APP_VERSION = "1.1.12";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 let editingCoinId = null;
@@ -137,7 +137,6 @@ function parseCoinValueToCent(valStr) {
   return num <= 2 ? Math.round(num * 100) : Math.round(num);
 }
 
-// Hilfsfunktion zur Umwandlung römischer Ziffern für saubere Sortierung (I -> 1, II -> 2 etc.)
 function romanToInt(s) {
   if (!s) return 0;
   const romanMap = { i: 1, v: 5, x: 10, l: 50, c: 100, d: 500, m: 1000 };
@@ -158,7 +157,6 @@ function romanToInt(s) {
 
 function parseSeriesOrder(seriesStr) {
   if (!seriesStr) return 0;
-  // Versuche römische Ziffern im String zu finden (z.B. "Prägserie II" -> "ii")
   const match = seriesStr.match(/\b(i|ii|iii|iv|v|vi|vii|viii|ix|x)\b/i);
   if (match) {
     return romanToInt(match[1]);
@@ -517,7 +515,6 @@ function loadCoins(countryId) {
         });
       });
 
-      // Sortieren: Zuerst nach Prägserie (Serie I vor II), dann nach Münzwert
       coins.sort((a, b) => {
         const orderA = parseSeriesOrder(a.series);
         const orderB = parseSeriesOrder(b.series);
@@ -530,7 +527,6 @@ function loadCoins(countryId) {
         return (a.title || '').localeCompare(b.title || '');
       });
 
-      // Nach Serien gruppieren für die Darstellung
       let groupedCoins = {};
       coins.forEach(coin => {
         const seriesKey = coin.series ? coin.series : 'Allgemeine Serie';
@@ -538,12 +534,10 @@ function loadCoins(countryId) {
         groupedCoins[seriesKey].push(coin);
       });
 
-      // Für jede Serie eine Sektion mit Überschrift rendern
       Object.keys(groupedCoins).forEach(seriesName => {
         const seriesContainer = document.createElement('div');
         seriesContainer.className = "space-y-2";
 
-        // Wenn es mehrere Serien gibt oder eine benannt ist, zeigen wir eine kleine Sektion-Überschrift
         if (Object.keys(groupedCoins).length > 1 || seriesName !== 'Allgemeine Serie') {
           const header = document.createElement('div');
           header.className = "flex items-center gap-2 pt-2 pb-1";
