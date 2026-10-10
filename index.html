@@ -43,7 +43,7 @@
 
         <!-- Versionsanzeige -->
         <span id="app-version" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1.5 rounded-xl font-mono font-bold">
-          v1.1.9
+          v1.1.10
         </span>
       </div>
     </div>
@@ -69,7 +69,7 @@
       </div>
     </div>
 
-    <!-- Raster der erfassten Länder -->
+    <!-- Raster erfasster Länder -->
     <div class="space-y-3">
       <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Übersicht</h2>
       <div id="country-list" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -88,9 +88,14 @@
         <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
       </div>
 
-      <!-- Eingabebereich für neue Münzen -->
+      <!-- Eingabebereich für neue / zu bearbeitende Münzen -->
       <div id="add-coin-box" class="bg-slate-900 p-3.5 rounded-2xl border border-slate-700 space-y-2.5 flex-shrink-0">
         
+        <div class="flex justify-between items-center">
+          <span id="form-mode-label" class="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider">Neue Münze hinzufügen</span>
+          <button id="cancel-edit-btn" onclick="resetCoinForm()" class="hidden text-[10px] text-slate-400 hover:text-white underline">Bearbeitung abbrechen</button>
+        </div>
+
         <div>
           <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Schnellauswahl Münzwert</span>
           <div class="flex flex-wrap gap-1">
@@ -129,7 +134,7 @@
             <input type="checkbox" id="coin-owned" class="w-4 h-4 text-indigo-600 rounded accent-indigo-500">
             Vorhanden
           </label>
-          <button onclick="saveCoin()" class="bg-indigo-600 text-white px-4 py-1.5 rounded-xl text-xs font-medium hover:bg-indigo-500 transition shadow">
+          <button id="save-coin-btn" onclick="saveCoin()" class="bg-indigo-600 text-white px-4 py-1.5 rounded-xl text-xs font-medium hover:bg-indigo-500 transition shadow">
             Münze speichern
           </button>
         </div>
@@ -155,6 +160,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.9"></script>
+  <script src="app.js?v=1.1.10"></script>
 </body>
 </html>

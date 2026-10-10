@@ -1,7 +1,8 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.9";
+const APP_VERSION = "1.1.10";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
+let editingCoinId = null; // Hält die ID der Münze, die gerade bearbeitet wird
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionElem = document.getElementById("app-version");
@@ -333,13 +334,61 @@ function openCountryModal(countryId, countryName) {
   const flag = getFlagEmoji(countryName);
   document.getElementById('modal-title').innerText = `${flag} ${countryName} (${currentCategory === 'laender' ? 'Kursmünzen' : '2€ Gedenk'})`;
   document.getElementById('coin-modal').classList.remove('hidden');
+  resetCoinForm();
   loadCoins(countryId);
 }
 
 function closeModal() {
   document.getElementById('coin-modal').classList.add('hidden');
   currentCountryId = null;
+  resetCoinForm();
+}
+
+// Formular zurücksetzen / Bearbeitungsmodus beenden
+function resetCoinForm() {
+  editingCoinId = null;
+  document.getElementById('coin-value').value = '';
+  document.getElementById('coin-title').value = '';
+  document.getElementById('coin-image-url').value = '';
+  document.getElementById('coin-owned').checked = false;
   removeSelectedImage();
+  
+  document.getElementById('form-mode-label').innerText = "Neue Münze hinzufügen";
+  document.getElementById('save-coin-btn').innerText = "Münze speichern";
+  document.getElementById('cancel-edit-btn').classList.add('hidden');
+}
+
+// Münze zur Bearbeitung in das Formular laden
+function startEditCoin(coinId, value, title, imageUrl, owned, event) {
+  event.stopPropagation();
+  editingCoinId = coinId;
+
+  document.getElementById('coin-value').value = value || '';
+  document.getElementById('coin-title').value = title || '';
+  document.getElementById('coin-owned').checked = !!owned;
+
+  if (imageUrl) {
+    if (imageUrl.startsWith('data:')) {
+      selectedImageBase64 = imageUrl;
+      document.getElementById('image-preview').src = imageUrl;
+      document.getElementById('image-preview-container').classList.remove('hidden');
+      document.getElementById('coin-image-url').value = '';
+    } else {
+      selectedImageBase64 = '';
+      document.getElementById('coin-image-url').value = imageUrl;
+      document.getElementById('image-preview-container').classList.add('hidden');
+    }
+  } else {
+    removeSelectedImage();
+  }
+
+  document.getElementById('form-mode-label').innerText = `Münze bearbeiten (${value})`;
+  document.getElementById('save-coin-btn').innerText = "Änderungen speichern";
+  document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+  // Nach oben zum Formular scrollen im Modal
+  const modalBox = document.querySelector('#coin-modal > div');
+  if (modalBox) modalBox.scrollTop = 0;
 }
 
 async function saveCoin() {
@@ -350,25 +399,38 @@ async function saveCoin() {
 
   const value = valueInput.value.trim();
   const title = titleInput.value.trim();
+  // Wenn kein neues Bild ausgewählt wurde, behalten wir das bestehende bei Bearbeitung oder nehmen die URL
   const imageUrl = selectedImageBase64 || urlInput.value.trim();
   const owned = document.getElementById('coin-owned').checked;
 
   if (!value) return;
 
   try {
-    await db.collection('countries').doc(currentCountryId).collection('coins').add({
-      value: value,
-      title: title || '',
-      imageUrl: imageUrl || '',
-      owned: owned,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    if (editingCoinId) {
+      // Bestehende Münze aktualisieren
+      const updateData = {
+        value: value,
+        title: title || '',
+        owned: owned,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (imageUrl) {
+        updateData.imageUrl = imageUrl;
+      }
 
-    valueInput.value = '';
-    titleInput.value = '';
-    urlInput.value = '';
-    removeSelectedImage();
-    document.getElementById('coin-owned').checked = false;
+      await db.collection('countries').doc(currentCountryId).collection('coins').doc(editingCoinId).update(updateData);
+    } else {
+      // Neue Münze hinzufügen
+      await db.collection('countries').doc(currentCountryId).collection('coins').add({
+        value: value,
+        title: title || '',
+        imageUrl: imageUrl || '',
+        owned: owned,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    resetCoinForm();
   } catch (error) {
     alert("Fehler beim Speichern der Münze: " + error.message);
   }
@@ -389,10 +451,15 @@ async function deleteCoin(coinId, event) {
   event.stopPropagation();
   if (!isEditMode) return;
 
-  try {
-    await db.collection('countries').doc(currentCountryId).collection('coins').doc(coinId).delete();
-  } catch (error) {
-    alert("Fehler beim Löschen der Münze: " + error.message);
+  if (confirm("Möchtest du diese Münze wirklich löschen?")) {
+    try {
+      if (editingCoinId === coinId) {
+        resetCoinForm();
+      }
+      await db.collection('countries').doc(currentCountryId).collection('coins').doc(coinId).delete();
+    } catch (error) {
+      alert("Fehler beim Löschen der Münze: " + error.message);
+    }
   }
 }
 
@@ -435,14 +502,19 @@ function loadCoins(countryId) {
           ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
           : 'bg-slate-800 text-slate-400 border-slate-700';
 
-        // Entfernt die feste Mindesthöhe und erlaubt automatisches Mitwachsen per Flexbox
         card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col gap-2 transition cursor-pointer shadow`;
         card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
 
-        const deleteBtnHtml = isEditMode ? `
-          <button onclick="deleteCoin('${coin.id}', event)" class="absolute top-2 right-2 text-xs text-rose-400 hover:text-rose-300 bg-slate-800/80 hover:bg-rose-950/60 p-1 rounded-lg transition opacity-70 group-hover:opacity-100 z-10">
-            🗑️
-          </button>
+        // Buttons oben rechts im Bearbeitungsmodus (Bearbeiten & Löschen)
+        const actionBtnsHtml = isEditMode ? `
+          <div class="absolute top-2 right-2 flex items-center gap-1 z-10 opacity-70 group-hover:opacity-100 transition">
+            <button onclick="startEditCoin('${coin.id}', '${coin.value.replace(/'/g, "\\'")}', '${(coin.title || '').replace(/'/g, "\\'")}', '${coin.imageUrl || ''}', ${coin.owned}, event)" class="text-xs text-indigo-300 hover:text-white bg-slate-800/90 hover:bg-indigo-600 p-1.5 rounded-lg transition shadow">
+              ✏️
+            </button>
+            <button onclick="deleteCoin('${coin.id}', event)" class="text-xs text-rose-400 hover:text-rose-300 bg-slate-800/90 hover:bg-rose-950/80 p-1.5 rounded-lg transition shadow">
+              🗑️
+            </button>
+          </div>
         ` : '';
 
         const imageHtml = coin.imageUrl ? `
@@ -453,15 +525,14 @@ function loadCoins(countryId) {
         ` : '';
 
         card.innerHTML = `
-          ${deleteBtnHtml}
+          ${actionBtnsHtml}
           ${imageHtml}
 
-          <div class="pr-5 space-y-0.5">
+          <div class="pr-12 space-y-0.5">
             <span class="font-bold text-base text-white block leading-tight">${coin.value}</span>
             ${coin.title ? `<span class="text-xs text-slate-300 block leading-snug mt-0.5">${coin.title}</span>` : ''}
           </div>
 
-          <!-- mt-auto drückt das Badge immer sauber nach unten, ohne über den Rand zu ragen -->
           <div class="mt-auto pt-1 flex items-center justify-between">
             <span class="text-[10px] px-2 py-0.5 rounded-md border font-semibold ${badgeClass}">
               ${isOwned ? '✓ Vorhanden' : 'Fehlt'}
