@@ -1,8 +1,8 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.10";
+const APP_VERSION = "1.1.11";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
-let editingCoinId = null; // Hält die ID der Münze, die gerade bearbeitet wird
+let editingCoinId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionElem = document.getElementById("app-version");
@@ -114,6 +114,11 @@ function setCoinValue(val) {
   if (input) input.value = val;
 }
 
+function setCoinSeries(val) {
+  const input = document.getElementById('coin-series');
+  if (input) input.value = val;
+}
+
 function parseCoinValueToCent(valStr) {
   if (!valStr) return 0;
   const str = valStr.trim().toLowerCase();
@@ -130,6 +135,35 @@ function parseCoinValueToCent(valStr) {
   }
 
   return num <= 2 ? Math.round(num * 100) : Math.round(num);
+}
+
+// Hilfsfunktion zur Umwandlung römischer Ziffern für saubere Sortierung (I -> 1, II -> 2 etc.)
+function romanToInt(s) {
+  if (!s) return 0;
+  const romanMap = { i: 1, v: 5, x: 10, l: 50, c: 100, d: 500, m: 1000 };
+  let num = 0;
+  const clean = s.trim().toLowerCase();
+  for (let i = 0; i < clean.length; i++) {
+    const curr = romanMap[clean[i]];
+    const next = romanMap[clean[i + 1]];
+    if (next && curr < next) {
+      num += next - curr;
+      i++;
+    } else if (curr) {
+      num += curr;
+    }
+  }
+  return num > 0 ? num : 999;
+}
+
+function parseSeriesOrder(seriesStr) {
+  if (!seriesStr) return 0;
+  // Versuche römische Ziffern im String zu finden (z.B. "Prägserie II" -> "ii")
+  const match = seriesStr.match(/\b(i|ii|iii|iv|v|vi|vii|viii|ix|x)\b/i);
+  if (match) {
+    return romanToInt(match[1]);
+  }
+  return 999;
 }
 
 function getFlagEmoji(countryName) {
@@ -344,10 +378,10 @@ function closeModal() {
   resetCoinForm();
 }
 
-// Formular zurücksetzen / Bearbeitungsmodus beenden
 function resetCoinForm() {
   editingCoinId = null;
   document.getElementById('coin-value').value = '';
+  document.getElementById('coin-series').value = '';
   document.getElementById('coin-title').value = '';
   document.getElementById('coin-image-url').value = '';
   document.getElementById('coin-owned').checked = false;
@@ -358,12 +392,12 @@ function resetCoinForm() {
   document.getElementById('cancel-edit-btn').classList.add('hidden');
 }
 
-// Münze zur Bearbeitung in das Formular laden
-function startEditCoin(coinId, value, title, imageUrl, owned, event) {
+function startEditCoin(coinId, value, series, title, imageUrl, owned, event) {
   event.stopPropagation();
   editingCoinId = coinId;
 
   document.getElementById('coin-value').value = value || '';
+  document.getElementById('coin-series').value = series || '';
   document.getElementById('coin-title').value = title || '';
   document.getElementById('coin-owned').checked = !!owned;
 
@@ -386,7 +420,6 @@ function startEditCoin(coinId, value, title, imageUrl, owned, event) {
   document.getElementById('save-coin-btn').innerText = "Änderungen speichern";
   document.getElementById('cancel-edit-btn').classList.remove('hidden');
 
-  // Nach oben zum Formular scrollen im Modal
   const modalBox = document.querySelector('#coin-modal > div');
   if (modalBox) modalBox.scrollTop = 0;
 }
@@ -394,12 +427,13 @@ function startEditCoin(coinId, value, title, imageUrl, owned, event) {
 async function saveCoin() {
   if (!isEditMode) return;
   const valueInput = document.getElementById('coin-value');
+  const seriesInput = document.getElementById('coin-series');
   const titleInput = document.getElementById('coin-title');
   const urlInput = document.getElementById('coin-image-url');
 
   const value = valueInput.value.trim();
+  const series = seriesInput.value.trim();
   const title = titleInput.value.trim();
-  // Wenn kein neues Bild ausgewählt wurde, behalten wir das bestehende bei Bearbeitung oder nehmen die URL
   const imageUrl = selectedImageBase64 || urlInput.value.trim();
   const owned = document.getElementById('coin-owned').checked;
 
@@ -407,9 +441,9 @@ async function saveCoin() {
 
   try {
     if (editingCoinId) {
-      // Bestehende Münze aktualisieren
       const updateData = {
         value: value,
+        series: series || '',
         title: title || '',
         owned: owned,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -420,9 +454,9 @@ async function saveCoin() {
 
       await db.collection('countries').doc(currentCountryId).collection('coins').doc(editingCoinId).update(updateData);
     } else {
-      // Neue Münze hinzufügen
       await db.collection('countries').doc(currentCountryId).collection('coins').add({
         value: value,
+        series: series || '',
         title: title || '',
         imageUrl: imageUrl || '',
         owned: owned,
@@ -471,7 +505,7 @@ function loadCoins(countryId) {
       coinList.innerHTML = '';
       
       if (snapshot.empty) {
-        coinList.innerHTML = `<p class="text-xs text-slate-500 italic p-4 text-center col-span-2 sm:col-span-3">Noch keine Münzen eingetragen.</p>`;
+        coinList.innerHTML = `<p class="text-xs text-slate-500 italic p-4 text-center">Noch keine Münzen eingetragen.</p>`;
         return;
       }
 
@@ -483,64 +517,102 @@ function loadCoins(countryId) {
         });
       });
 
+      // Sortieren: Zuerst nach Prägserie (Serie I vor II), dann nach Münzwert
       coins.sort((a, b) => {
+        const orderA = parseSeriesOrder(a.series);
+        const orderB = parseSeriesOrder(b.series);
+        if (orderA !== orderB) return orderA - orderB;
+
         const valA = parseCoinValueToCent(a.value);
         const valB = parseCoinValueToCent(b.value);
         if (valA !== valB) return valA - valB;
+
         return (a.title || '').localeCompare(b.title || '');
       });
 
+      // Nach Serien gruppieren für die Darstellung
+      let groupedCoins = {};
       coins.forEach(coin => {
-        const card = document.createElement('div');
-        
-        const isOwned = coin.owned;
-        const bgClass = isOwned 
-          ? 'bg-emerald-950/40 border-emerald-600/60 hover:border-emerald-500' 
-          : 'bg-slate-900 border-slate-700/80 hover:border-slate-500';
-        
-        const badgeClass = isOwned 
-          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
-          : 'bg-slate-800 text-slate-400 border-slate-700';
+        const seriesKey = coin.series ? coin.series : 'Allgemeine Serie';
+        if (!groupedCoins[seriesKey]) groupedCoins[seriesKey] = [];
+        groupedCoins[seriesKey].push(coin);
+      });
 
-        card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col gap-2 transition cursor-pointer shadow`;
-        card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
+      // Für jede Serie eine Sektion mit Überschrift rendern
+      Object.keys(groupedCoins).forEach(seriesName => {
+        const seriesContainer = document.createElement('div');
+        seriesContainer.className = "space-y-2";
 
-        // Buttons oben rechts im Bearbeitungsmodus (Bearbeiten & Löschen)
-        const actionBtnsHtml = isEditMode ? `
-          <div class="absolute top-2 right-2 flex items-center gap-1 z-10 opacity-70 group-hover:opacity-100 transition">
-            <button onclick="startEditCoin('${coin.id}', '${coin.value.replace(/'/g, "\\'")}', '${(coin.title || '').replace(/'/g, "\\'")}', '${coin.imageUrl || ''}', ${coin.owned}, event)" class="text-xs text-indigo-300 hover:text-white bg-slate-800/90 hover:bg-indigo-600 p-1.5 rounded-lg transition shadow">
-              ✏️
-            </button>
-            <button onclick="deleteCoin('${coin.id}', event)" class="text-xs text-rose-400 hover:text-rose-300 bg-slate-800/90 hover:bg-rose-950/80 p-1.5 rounded-lg transition shadow">
-              🗑️
-            </button>
-          </div>
-        ` : '';
-
-        const imageHtml = coin.imageUrl ? `
-          <div onclick="openLightbox('${coin.imageUrl}', '${coin.value}${coin.title ? ' - ' + coin.title : ''}', event)" class="w-full h-24 flex-shrink-0 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center group/img relative cursor-zoom-in">
-            <img src="${coin.imageUrl}" class="w-full h-full object-cover transition transform group-hover/img:scale-105" alt="${coin.value}">
-            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-xs text-white font-medium">🔍 Vergrößern</div>
-          </div>
-        ` : '';
-
-        card.innerHTML = `
-          ${actionBtnsHtml}
-          ${imageHtml}
-
-          <div class="pr-12 space-y-0.5">
-            <span class="font-bold text-base text-white block leading-tight">${coin.value}</span>
-            ${coin.title ? `<span class="text-xs text-slate-300 block leading-snug mt-0.5">${coin.title}</span>` : ''}
-          </div>
-
-          <div class="mt-auto pt-1 flex items-center justify-between">
-            <span class="text-[10px] px-2 py-0.5 rounded-md border font-semibold ${badgeClass}">
-              ${isOwned ? '✓ Vorhanden' : 'Fehlt'}
+        // Wenn es mehrere Serien gibt oder eine benannt ist, zeigen wir eine kleine Sektion-Überschrift
+        if (Object.keys(groupedCoins).length > 1 || seriesName !== 'Allgemeine Serie') {
+          const header = document.createElement('div');
+          header.className = "flex items-center gap-2 pt-2 pb-1";
+          header.innerHTML = `
+            <span class="text-xs font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-lg">
+              ⭐ ${seriesName}
             </span>
-          </div>
-        `;
+            <div class="flex-1 bg-slate-700/50 h-[1px]"></div>
+          `;
+          seriesContainer.appendChild(header);
+        }
 
-        coinList.appendChild(card);
+        const grid = document.createElement('div');
+        grid.className = "grid grid-cols-2 sm:grid-cols-3 gap-3";
+
+        groupedCoins[seriesName].forEach(coin => {
+          const card = document.createElement('div');
+          
+          const isOwned = coin.owned;
+          const bgClass = isOwned 
+            ? 'bg-emerald-950/40 border-emerald-600/60 hover:border-emerald-500' 
+            : 'bg-slate-900 border-slate-700/80 hover:border-slate-500';
+          
+          const badgeClass = isOwned 
+            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+            : 'bg-slate-800 text-slate-400 border-slate-700';
+
+          card.className = `relative group border ${bgClass} p-3 rounded-2xl flex flex-col gap-2 transition cursor-pointer shadow`;
+          card.onclick = (e) => toggleCoinOwned(coin.id, coin.owned, e);
+
+          const actionBtnsHtml = isEditMode ? `
+            <div class="absolute top-2 right-2 flex items-center gap-1 z-10 opacity-70 group-hover:opacity-100 transition">
+              <button onclick="startEditCoin('${coin.id}', '${coin.value.replace(/'/g, "\\'")}', '${(coin.series || '').replace(/'/g, "\\'")}', '${(coin.title || '').replace(/'/g, "\\'")}', '${coin.imageUrl || ''}', ${coin.owned}, event)" class="text-xs text-indigo-300 hover:text-white bg-slate-800/90 hover:bg-indigo-600 p-1.5 rounded-lg transition shadow" title="Bearbeiten">
+                ✏️
+              </button>
+              <button onclick="deleteCoin('${coin.id}', event)" class="text-xs text-rose-400 hover:text-rose-300 bg-slate-800/90 hover:bg-rose-950/80 p-1.5 rounded-lg transition shadow" title="Löschen">
+                🗑️
+              </button>
+            </div>
+          ` : '';
+
+          const imageHtml = coin.imageUrl ? `
+            <div onclick="openLightbox('${coin.imageUrl}', '${coin.value}${coin.series ? ' (' + coin.series + ')' : ''}${coin.title ? ' - ' + coin.title : ''}', event)" class="w-full h-24 flex-shrink-0 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center group/img relative cursor-zoom-in">
+              <img src="${coin.imageUrl}" class="w-full h-full object-cover transition transform group-hover/img:scale-105" alt="${coin.value}">
+              <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center text-xs text-white font-medium">🔍 Vergrößern</div>
+            </div>
+          ` : '';
+
+          card.innerHTML = `
+            ${actionBtnsHtml}
+            ${imageHtml}
+
+            <div class="pr-12 space-y-0.5">
+              <span class="font-bold text-base text-white block leading-tight">${coin.value}</span>
+              ${coin.title ? `<span class="text-xs text-slate-300 block leading-snug mt-0.5">${coin.title}</span>` : ''}
+            </div>
+
+            <div class="mt-auto pt-1 flex items-center justify-between">
+              <span class="text-[10px] px-2 py-0.5 rounded-md border font-semibold ${badgeClass}">
+                ${isOwned ? '✓ Vorhanden' : 'Fehlt'}
+              </span>
+            </div>
+          `;
+
+          grid.appendChild(card);
+        });
+
+        seriesContainer.appendChild(grid);
+        coinList.appendChild(seriesContainer);
       });
     });
 }

@@ -43,7 +43,7 @@
 
         <!-- Versionsanzeige -->
         <span id="app-version" class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1.5 rounded-xl font-mono font-bold">
-          v1.1.10
+          v1.1.11
         </span>
       </div>
     </div>
@@ -96,8 +96,9 @@
           <button id="cancel-edit-btn" onclick="resetCoinForm()" class="hidden text-[10px] text-slate-400 hover:text-white underline">Bearbeitung abbrechen</button>
         </div>
 
+        <!-- Zeile 1: Schnellauswahl Wert -->
         <div>
-          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Schnellauswahl Münzwert</span>
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Münzwert</span>
           <div class="flex flex-wrap gap-1">
             <button onclick="setCoinValue('1 Cent')" class="px-2 py-0.5 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-md text-slate-200 transition font-medium">1 ct</button>
             <button onclick="setCoinValue('2 Cent')" class="px-2 py-0.5 text-xs bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 rounded-lg text-slate-200 transition font-medium">2 ct</button>
@@ -110,11 +111,23 @@
           </div>
         </div>
 
+        <!-- Zeile 2: Wert & Prägserie -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input type="text" id="coin-value" placeholder="Wert (z. B. 2 Euro, 5 Cent)" class="p-2 border border-slate-700 rounded-xl bg-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <input type="text" id="coin-title" placeholder="Motiv / Jahr / Name (optional)" class="p-2 border border-slate-700 rounded-xl bg-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <div>
+            <div class="flex gap-1 mb-1">
+              <button onclick="setCoinSeries('Prägserie I')" class="px-1.5 py-0.5 text-[10px] bg-slate-800 hover:bg-indigo-600 border border-slate-700 rounded text-slate-300">Serie I</button>
+              <button onclick="setCoinSeries('Prägserie II')" class="px-1.5 py-0.5 text-[10px] bg-slate-800 hover:bg-indigo-600 border border-slate-700 rounded text-slate-300">Serie II</button>
+              <button onclick="setCoinSeries('Prägserie III')" class="px-1.5 py-0.5 text-[10px] bg-slate-800 hover:bg-indigo-600 border border-slate-700 rounded text-slate-300">Serie III</button>
+            </div>
+            <input type="text" id="coin-series" placeholder="Prägserie (z. B. Prägserie I)" class="w-full p-2 border border-slate-700 rounded-xl bg-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
         </div>
 
+        <!-- Zeile 3: Titel / Notiz -->
+        <input type="text" id="coin-title" placeholder="Motiv / Jahr / Name / König (optional)" class="w-full p-2 border border-slate-700 rounded-xl bg-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+
+        <!-- Zeile 4: Bild Auswahl -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <label class="flex items-center justify-center gap-1.5 p-2 border border-dashed border-slate-700 hover:border-indigo-500 rounded-xl bg-slate-800 text-xs text-slate-300 cursor-pointer transition">
             🖼️ <span>Bild aus Galerie</span>
@@ -140,8 +153,8 @@
         </div>
       </div>
 
-      <!-- Münz-Grid -->
-      <div id="coin-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto flex-1 pr-1 py-1">
+      <!-- Münz-Grid (Nach Serien gruppiert gerendert) -->
+      <div id="coin-list" class="flex flex-col gap-4 overflow-y-auto flex-1 pr-1 py-1">
       </div>
 
       <button onclick="closeModal()" class="w-full py-2 bg-slate-700 text-slate-200 font-medium rounded-xl hover:bg-slate-600 transition text-sm flex-shrink-0">
@@ -160,6 +173,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.10"></script>
+  <script src="app.js?v=1.1.11"></script>
 </body>
 </html>
