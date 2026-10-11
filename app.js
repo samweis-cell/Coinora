@@ -1,5 +1,5 @@
 // VERSIONSNUMMER
-const APP_VERSION = "1.1.12";
+const APP_VERSION = "1.1.13";
 
 let isEditMode = localStorage.getItem("coinora_edit_mode") !== "false";
 let editingCoinId = null;
@@ -365,6 +365,19 @@ function openCountryModal(countryId, countryName) {
   currentCountryId = countryId;
   const flag = getFlagEmoji(countryName);
   document.getElementById('modal-title').innerText = `${flag} ${countryName} (${currentCategory === 'laender' ? 'Kursmünzen' : '2€ Gedenk'})`;
+  
+  // Formular je nach Kategorie anpassen (Gedenkmünzen brauchen keine Serien/Cent-Auswahl)
+  const quickValGroup = document.getElementById('field-group-value-quick');
+  const kursGroup = document.getElementById('field-group-kurs');
+
+  if (currentCategory === 'gedenk') {
+    if (quickValGroup) quickValGroup.classList.add('hidden');
+    if (kursGroup) kursGroup.classList.add('hidden');
+  } else {
+    if (quickValGroup) quickValGroup.classList.remove('hidden');
+    if (kursGroup) kursGroup.classList.remove('hidden');
+  }
+
   document.getElementById('coin-modal').classList.remove('hidden');
   resetCoinForm();
   loadCoins(countryId);
@@ -424,18 +437,26 @@ function startEditCoin(coinId, value, series, title, imageUrl, owned, event) {
 
 async function saveCoin() {
   if (!isEditMode) return;
-  const valueInput = document.getElementById('coin-value');
-  const seriesInput = document.getElementById('coin-series');
-  const titleInput = document.getElementById('coin-title');
   const urlInput = document.getElementById('coin-image-url');
-
-  const value = valueInput.value.trim();
-  const series = seriesInput.value.trim();
-  const title = titleInput.value.trim();
+  const titleInput = document.getElementById('coin-title');
   const imageUrl = selectedImageBase64 || urlInput.value.trim();
+  const title = titleInput.value.trim();
   const owned = document.getElementById('coin-owned').checked;
 
-  if (!value) return;
+  let value = "2 Euro";
+  let series = "";
+
+  if (currentCategory === 'laender') {
+    const valueInput = document.getElementById('coin-value');
+    const seriesInput = document.getElementById('coin-series');
+    value = valueInput.value.trim();
+    series = seriesInput.value.trim();
+    if (!value) return;
+  } else {
+    // Bei Gedenkmünzen ist der Wert immer fest 2 Euro und es gibt keine Serien
+    value = "2 Euro";
+    series = "";
+  }
 
   try {
     if (editingCoinId) {
@@ -529,7 +550,7 @@ function loadCoins(countryId) {
 
       let groupedCoins = {};
       coins.forEach(coin => {
-        const seriesKey = coin.series ? coin.series : 'Allgemeine Serie';
+        const seriesKey = coin.series ? coin.series : (currentCategory === 'gedenk' ? '2€ Gedenkmünzen' : 'Allgemeine Serie');
         if (!groupedCoins[seriesKey]) groupedCoins[seriesKey] = [];
         groupedCoins[seriesKey].push(coin);
       });
@@ -538,7 +559,7 @@ function loadCoins(countryId) {
         const seriesContainer = document.createElement('div');
         seriesContainer.className = "space-y-2";
 
-        if (Object.keys(groupedCoins).length > 1 || seriesName !== 'Allgemeine Serie') {
+        if (Object.keys(groupedCoins).length > 1 || (seriesName !== 'Allgemeine Serie' && seriesName !== '2€ Gedenkmünzen')) {
           const header = document.createElement('div');
           header.className = "flex items-center gap-2 pt-2 pb-1";
           header.innerHTML = `
